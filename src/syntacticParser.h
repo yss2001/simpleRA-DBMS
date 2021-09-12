@@ -1,3 +1,5 @@
+#ifndef SYNTACTICPARSER_H
+#define SYNTACTICPARSER_H
 #include "tableCatalogue.h"
 
 using namespace std;
@@ -123,3 +125,4 @@ bool syntacticParseSOURCE();
 
 bool isFileExists(string tableName);
 bool isQueryFile(string fileName);
+#endif

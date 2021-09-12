@@ -1,3 +1,5 @@
+#ifndef TABLECATALOGUE_H
+#define TABLECATALOGUE_H
 #include "table.h"
 
 /**
@@ -21,3 +23,4 @@ public:
     void print();
     ~TableCatalogue();
 };
+#endif
