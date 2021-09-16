@@ -1,6 +1,7 @@
 #ifndef SYNTACTICPARSER_H
 #define SYNTACTICPARSER_H
 #include "tableCatalogue.h"
+#include "matrixCatalogue.h"
 
 using namespace std;
 
@@ -14,7 +15,10 @@ enum QueryType
     JOIN,
     LIST,
     LOAD,
+    LOADMATRIX,
     PRINT,
+    PRINTMATRIX,
+    //TRANSPOSE,
     PROJECTION,
     RENAME,
     SELECTION,
@@ -77,8 +81,12 @@ public:
     string joinSecondColumnName = "";
 
     string loadRelationName = "";
+    string loadMatrixName = "";
 
     string printRelationName = "";
+    string printMatrixName = "";
+
+    //string transposeName = "";
 
     string projectionResultRelationName = "";
     vector<string> projectionColumnList;
@@ -116,7 +124,10 @@ bool syntacticParseINDEX();
 bool syntacticParseJOIN();
 bool syntacticParseLIST();
 bool syntacticParseLOAD();
+bool syntacticParseLOADMATRIX();
 bool syntacticParsePRINT();
+bool syntacticParsePRINTMATRIX();
+bool syntacticParseTRANSPOSE();
 bool syntacticParsePROJECTION();
 bool syntacticParseRENAME();
 bool syntacticParseSELECTION();

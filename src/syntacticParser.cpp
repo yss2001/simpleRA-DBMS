@@ -18,9 +18,19 @@ bool syntacticParse()
     else if (possibleQueryType == "LIST")
         return syntacticParseLIST();
     else if (possibleQueryType == "LOAD")
+    {
+	if (tokenizedQuery[1] == "MATRIX")
+		return syntacticParseLOADMATRIX();
         return syntacticParseLOAD();
+    }
     else if (possibleQueryType == "PRINT")
+    {
+	if (tokenizedQuery[1] == "MATRIX")
+		return syntacticParsePRINTMATRIX();
         return syntacticParsePRINT();
+    }
+    //else if ( possibleQueryType == "TRANSPOSE")
+	    //return syntacticParseTRANSPOSE();
     else if (possibleQueryType == "RENAME")
         return syntacticParseRENAME();
     else if(possibleQueryType == "EXPORT")
@@ -89,8 +99,12 @@ void ParsedQuery::clear()
     this->joinSecondColumnName = "";
 
     this->loadRelationName = "";
+    this->loadMatrixName = "";
 
     this->printRelationName = "";
+    this->printMatrixName = "";
+
+    //this->transposeName = "";
 
     this->projectionResultRelationName = "";
     this->projectionColumnList.clear();
