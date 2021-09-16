@@ -34,7 +34,11 @@ bool syntacticParse()
     else if (possibleQueryType == "RENAME")
         return syntacticParseRENAME();
     else if(possibleQueryType == "EXPORT")
+    {
+	if (tokenizedQuery[1] == "MATRIX")
+		return syntacticParseEXPORTMATRIX();
         return syntacticParseEXPORT();
+    }
     else if(possibleQueryType == "SOURCE")
         return syntacticParseSOURCE();
     else
@@ -86,6 +90,7 @@ void ParsedQuery::clear()
     this->distinctRelationName = "";
 
     this->exportRelationName = "";
+    this->exportMatrixName = "";
 
     this->indexingStrategy = NOTHING;
     this->indexColumnName = "";
