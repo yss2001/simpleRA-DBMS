@@ -115,12 +115,14 @@ void Matrix::transpose()
 
 	MatrixCursor outerCursor(this->matrixName, 0);
 	int element = 0;
+	int outerOffset = 0;
 
 	for (int x = 0; x < matrixSize; x++)
 	{
 		for (int y = 0; y < matrixSize; y++)
 		{
 			element = outerCursor.getNext();
+			outerOffset = ((x * matrixSize) + y) % maxValuesPerBlock;
 
 			if( x!=y && y>x)
 			{
@@ -133,10 +135,12 @@ void Matrix::transpose()
 
 				for(int i=0; i<=transposeOffset; i++) transposeElement = innerCursor.getNext();
 
-				cout<<"Transpose of "<<element<<" = "<<transposeElement<<"\n";
+				outerCursor.putValue(transposeElement, outerOffset);
+				innerCursor.putValue(element, transposeOffset);
 			}
 		}
 	}
+	matrixBufferManager.reloadPages(this->matrixName);
 }
 
 void Matrix::makePermanent()

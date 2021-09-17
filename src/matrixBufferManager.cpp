@@ -65,3 +65,16 @@ void MatrixBufferManager::deleteFile(string matrixName, int pageIndex)
 	string fileName = "../data/temp/" + matrixName + "_Page" + to_string(pageIndex);
 	this->deleteFile(fileName);
 }
+
+void MatrixBufferManager::reloadPages(string matrixName)
+{
+	logger.log("MatrixBufferManager::reloadPages");
+
+	for (int i=0; i<matrixPages.size(); i++)
+	{
+		if(matrixPages[i].getMatrixName() == matrixName)
+		{
+			matrixPages[i].reload();
+		}
+	}
+}

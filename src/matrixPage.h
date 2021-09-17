@@ -17,5 +17,8 @@ class MatrixPage{
 	int getElements(int index);
 	void writePage();
 	int getElementCount();
+	void editPage(int value, int pageIndex);
+	void reload();
+	string getMatrixName(); 
 };
 #endif
