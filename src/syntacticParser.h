@@ -19,7 +19,7 @@ enum QueryType
     LOADMATRIX,
     PRINT,
     PRINTMATRIX,
-    //TRANSPOSE,
+    TRANSPOSE,
     PROJECTION,
     RENAME,
     SELECTION,
@@ -88,7 +88,7 @@ public:
     string printRelationName = "";
     string printMatrixName = "";
 
-    //string transposeName = "";
+    string transposeName = "";
 
     string projectionResultRelationName = "";
     vector<string> projectionColumnList;

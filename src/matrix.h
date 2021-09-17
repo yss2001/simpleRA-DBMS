@@ -23,6 +23,7 @@ class Matrix{
 	void getNextPage(MatrixCursor *cursor);
 	MatrixCursor getCursor();
 	void unload();
+	void transpose();
 
 	bool isSparse = false;
 	uint sparseElementCount = 0;

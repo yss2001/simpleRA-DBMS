@@ -109,41 +109,10 @@ void Matrix::print()
 	}
 }
 
-/*void Matrix::transpose()
+void Matrix::transpose()
 {
 	logger.log("Matrix::transpose");
-	
-	MatrixCursor outerCursor(this->matrixName, 0);
-	int element = 0;
-	int outerOffset = 0;
-
-	for (int x=0; x<matrixSize; x++)
-	{
-		for (int y=0; y<matrixSize; y++)
-		{
-			element = outerCursor.getNext();
-			cout<<"at x = "<< x << " and y = "<<y <<" value is = "<<element<<"\n";
-			outerOffset = ((x*matrixSize) + y) % maxValuesPerBlock;
-			cout<<"outeroff = "<<outerOffset<<"\n";
-
-			if (x!=y && y>=x)
-			{
-				int pageNum = ((y*matrixSize) + x) / maxValuesPerBlock;
-				int pageOff = ((y*matrixSize) + x) % maxValuesPerBlock;
-				cout<<"transpose n and o: "<<pageNum<<", "<<pageOff<<"\n";
-
-				MatrixCursor innerCursor(this->matrixName, pageNum);
-
-				for (int i=0; i<pageOff; i++) innerCursor.getNext();
-
-				int transposeElement = innerCursor.getNext();
-				cout<<"transpose element = "<<transposeElement<<"\n";
-				outerCursor.putValue(outerOffset, transposeElement);
-				innerCursor.putValue(pageOff, element);
-			}
-		}
-	}
-}*/
+}
 
 void Matrix::makePermanent()
 {

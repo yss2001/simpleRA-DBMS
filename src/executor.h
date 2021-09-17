@@ -16,7 +16,7 @@ void executeLOAD();
 void executeLOADMATRIX();
 void executePRINT();
 void executePRINTMATRIX();
-//void executeTRANSPOSE();
+void executeTRANSPOSE();
 void executePROJECTION();
 void executeRENAME();
 void executeSELECTION();
