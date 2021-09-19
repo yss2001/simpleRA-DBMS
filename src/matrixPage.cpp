@@ -48,15 +48,10 @@ MatrixPage::MatrixPage(string matrixName, int pageIndex, vector<int> elements)
 }
 
 
-void MatrixPage::editPage(int value, int pageIndex)
+void MatrixPage::editPage(vector<int> newElements)
 {
 	logger.log("MatrixPage::editPage");
-	this->elements[pageIndex] = value;
-
-	fstream fin(this->pageName, ios::in | ios::out | ios::binary);
-	fin.seekp(pageIndex * sizeof(int), ios_base::beg);
-	fin.write(reinterpret_cast<const char*>(&value), sizeof(value));
-	fin.close();
+	this->elements = newElements;
 }
 
 void MatrixPage::writePage()
@@ -68,6 +63,19 @@ void MatrixPage::writePage()
 		fout.write(reinterpret_cast<const char*>(&elements[element]), sizeof(elements[element]));
 	}
 
+	fout.close();
+}
+
+void MatrixPage::appendPage(vector<int> newElements)
+{
+	logger.log("MatrixPage::appendPage");
+	fstream fout(this->pageName, ios::app | ios::out | ios::binary);
+	fout.seekg(0, ios_base::end);
+	for (int element = 0; element < newElements.size(); element++)
+	{
+		fout.write(reinterpret_cast<const char*>(&newElements[element]), sizeof(newElements[element]));
+		this->elements.push_back(newElements[element]);
+	}
 	fout.close();
 }
 
@@ -88,4 +96,10 @@ void MatrixPage::reload()
 string MatrixPage::getMatrixName()
 {
 	return this->matrixName;
+}
+
+void MatrixPage::renamePage(int newIndex)
+{
+	this->pageIndex = newIndex;
+	this->pageName = "../data/temp/" + this->matrixName + "_Page" + to_string(newIndex);
 }

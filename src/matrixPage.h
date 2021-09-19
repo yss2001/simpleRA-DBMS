@@ -16,9 +16,11 @@ class MatrixPage{
 	MatrixPage(string matrixName, int pageIndex, vector<int> elements);
 	int getElements(int index);
 	void writePage();
+	void appendPage(vector<int> newElements);
 	int getElementCount();
-	void editPage(int value, int pageIndex);
+	void editPage(vector<int> newElements);
 	void reload();
 	string getMatrixName(); 
+	void renamePage(int newIndex);
 };
 #endif

@@ -14,6 +14,6 @@ class MatrixCursor{
 	MatrixCursor(string matrixName, int pageIndex);
 	int getNext();
 	void nextPage(int pageIndex);
-	void putValue(int index, int value);
+	void moveCursor(int offset);
 };
 #endif
