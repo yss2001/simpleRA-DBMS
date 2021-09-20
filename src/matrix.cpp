@@ -23,11 +23,13 @@ bool Matrix::load()
 	{
 		fin.close();
 		if (this->calculateSize(line))
+		{
 			if (this->blockify())
 			{
 				fin.close();
 				return true;
 			}
+		}
 	}
 	fin.close();
 	return false;
@@ -46,8 +48,10 @@ bool Matrix::calculateSize(string line)
 	this->matrixSize = size;
 	this->maxValuesPerBlock = (int)((BLOCK_SIZE * 1000) / (sizeof(int)));
 	return true;
+	// do error check for n*n matrix, check sparse, and update flag and sparse num accordingly
 }
 
+// create blockify sparse
 bool Matrix::blockify()
 {
 	logger.log("Matrix::blockify");

@@ -19,27 +19,27 @@ bool syntacticParse()
         return syntacticParseLIST();
     else if (possibleQueryType == "LOAD")
     {
-	if (tokenizedQuery[1] == "MATRIX")
-		return syntacticParseLOADMATRIX();
+        if (tokenizedQuery[1] == "MATRIX")
+            return syntacticParseLOADMATRIX();
         return syntacticParseLOAD();
     }
     else if (possibleQueryType == "PRINT")
     {
-	if (tokenizedQuery[1] == "MATRIX")
-		return syntacticParsePRINTMATRIX();
+        if (tokenizedQuery[1] == "MATRIX")
+            return syntacticParsePRINTMATRIX();
         return syntacticParsePRINT();
     }
-    //else if ( possibleQueryType == "TRANSPOSE")
-	    //return syntacticParseTRANSPOSE();
+    else if ( possibleQueryType == "TRANSPOSE")
+        return syntacticParseTRANSPOSE();
     else if (possibleQueryType == "RENAME")
         return syntacticParseRENAME();
-    else if(possibleQueryType == "EXPORT")
+    else if (possibleQueryType == "EXPORT")
     {
-	if (tokenizedQuery[1] == "MATRIX")
-		return syntacticParseEXPORTMATRIX();
+        if (tokenizedQuery[1] == "MATRIX")
+            return syntacticParseEXPORTMATRIX();
         return syntacticParseEXPORT();
     }
-    else if(possibleQueryType == "SOURCE")
+    else if (possibleQueryType == "SOURCE")
         return syntacticParseSOURCE();
     else
     {
@@ -109,7 +109,7 @@ void ParsedQuery::clear()
     this->printRelationName = "";
     this->printMatrixName = "";
 
-    //this->transposeName = "";
+    this->transposeName = "";
 
     this->projectionResultRelationName = "";
     this->projectionColumnList.clear();
@@ -158,7 +158,8 @@ bool isFileExists(string tableName)
  * @return true 
  * @return false 
  */
-bool isQueryFile(string fileName){
+bool isQueryFile(string fileName)
+{
     fileName = "../data/" + fileName + ".ra";
     struct stat buffer;
     return (stat(fileName.c_str(), &buffer) == 0);

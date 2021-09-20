@@ -1,5 +1,6 @@
 #include "global.h"
 
+//check sparse or not here
 bool syntacticParsePRINTMATRIX()
 {
     logger.log("syntacticParsePRINTMATRIX");
@@ -28,6 +29,9 @@ void executePRINTMATRIX()
 {
     logger.log("executePRINTMATRIX");
     Matrix* matrix = matrixCatalogue.getMatrix(parsedQuery.printMatrixName);
-    matrix->print();
+    if(matrix->isSparse)
+        matrix->sparsePrint();
+    else
+        matrix->print();
     return;
 }

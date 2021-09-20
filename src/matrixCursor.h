@@ -13,6 +13,7 @@ class MatrixCursor{
 
 	MatrixCursor(string matrixName, int pageIndex);
 	int getNext();
+	SparseNode sparseGetNext();
 	void nextPage(int pageIndex);
 	//void putValue(int index, int value);
 };

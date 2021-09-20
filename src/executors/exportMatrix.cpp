@@ -28,6 +28,9 @@ void executeEXPORTMATRIX()
 {
     logger.log("executeEXPORTMATRIX");
     Matrix* matrix = matrixCatalogue.getMatrix(parsedQuery.exportMatrixName);
-    matrix->makePermanent();
+    if(matrix->isSparse)
+        matrix->sparseMakePermanent();
+    else
+        matrix->makePermanent();
     return;
 }

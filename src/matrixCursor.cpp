@@ -1,5 +1,6 @@
 #include "global.h"
 
+// sparse matrix add all equivalent functions (sparseGetNext)
 MatrixCursor::MatrixCursor(string matrixName, int pageIndex)
 {
 	logger.log("MatrixCursor::MatrixCursor");
@@ -11,7 +12,7 @@ MatrixCursor::MatrixCursor(string matrixName, int pageIndex)
 
 int MatrixCursor::getNext()
 {
-	if(this->pagePointer == this->page.getElementCount())
+	if (this->pagePointer == this->page.getElementCount())
 	{
 		matrixCatalogue.getMatrix(this->matrixName)->getNextPage(this);
 	}
@@ -23,6 +24,19 @@ int MatrixCursor::getNext()
 	return result;
 }
 
+SparseNode MatrixCursor::sparseGetNext()
+{
+	if (this->pagePointer == this->page.getElementCount())
+	{
+		matrixCatalogue.getMatrix(this->matrixName)->getNextPage(this);
+	}
+
+	logger.log("MatrixCursor::sparseGetNext");
+	SparseNode result = this->page.sparseGetElements(this->pagePointer);
+	this->pagePointer++;
+
+	return result;
+}
 
 void MatrixCursor::nextPage(int pageIndex)
 {
