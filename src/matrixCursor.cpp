@@ -45,3 +45,9 @@ void MatrixCursor::nextPage(int pageIndex)
 	this->pageIndex = pageIndex;
 	this->pagePointer = 0;
 }
+
+void MatrixCursor::putValue(int value, int pageIndex)
+{
+	logger.log("MatrixCursor::putValue");
+	this->page.editPage(value, pageIndex);
+}

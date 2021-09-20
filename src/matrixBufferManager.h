@@ -17,6 +17,7 @@ class MatrixBufferManager{
 	void deleteFile(string matrixName, int pageIndex);
 	void deleteFile(string fileName);
 	void writePage(string matrixName, int pageIndex, vector<int> elements);
+	void reloadPages(string matrixName);
 };
 
 #endif
