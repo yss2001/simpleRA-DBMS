@@ -83,7 +83,7 @@ MatrixPage::MatrixPage(string matrixName, int pageIndex, vector<SparseNode> spar
 void MatrixPage::editPage(vector<int> newElements)
 {
 	logger.log("MatrixPage::editPage");
-	this->elements[pageIndex] = value;
+	this->elements = newElements;
 }
 
 void MatrixPage::sparseEditPage(SparseNode value, int pageIndex)

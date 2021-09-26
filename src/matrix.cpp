@@ -135,25 +135,26 @@ bool Matrix::blockify()
 	string line, word;
 	vector<int> elements;
 	int x = 0, y = 0;
-	int grayArea = this->matrixSize - (this->matrixSize%this->maxValuesPerBlock);
+	int grayArea = this->matrixSize - (this->matrixSize % this->maxValuesPerBlock);
 
-	while(getline(fin, line))
+	while (getline(fin, line))
 	{
 		int pageNumber = 0;
-		if(this->matrixSize % this->maxValuesPerBlock == 0) pageNumber += this->matrixSize/this->maxValuesPerBlock * (x/this->maxValuesPerBlock);
+		if (this->matrixSize % this->maxValuesPerBlock == 0)
+			pageNumber += this->matrixSize / this->maxValuesPerBlock * (x / this->maxValuesPerBlock);
 		else
 		{
-			pageNumber += ((this->matrixSize/this->maxValuesPerBlock + 1) * (x/this->maxValuesPerBlock));
+			pageNumber += ((this->matrixSize / this->maxValuesPerBlock + 1) * (x / this->maxValuesPerBlock));
 		}
 		stringstream s(line);
 
-		while(getline(s, word, ','))
+		while (getline(s, word, ','))
 		{
 			elements.push_back(stoi(word));
-			y+=1;
-			if(y%(this->maxValuesPerBlock)==0 || y == this->matrixSize)
+			y += 1;
+			if (y % (this->maxValuesPerBlock) == 0 || y == this->matrixSize)
 			{
-				if(matrixBufferManager.appendPage(this->matrixName, pageNumber, elements))
+				if (matrixBufferManager.appendPage(this->matrixName, pageNumber, elements))
 					this->pageCount += 1;
 				elements.clear();
 				pageNumber += 1;
@@ -222,69 +223,68 @@ void Matrix::print()
 	int pageNumber = 0;
 	int x = 0, y = 0;
 	MatrixCursor cursor(this->matrixName, pageNumber);
-	int grayArea = this->matrixSize - (this->matrixSize%this->maxValuesPerBlock);
-	while (x<maxRows)
+	int grayArea = this->matrixSize - (this->matrixSize % this->maxValuesPerBlock);
+	while (x < maxRows)
 	{
-		if(this->matrixSize % this->maxValuesPerBlock == 0) pageNumber = this->matrixSize/this->maxValuesPerBlock * (x/this->maxValuesPerBlock);
+		if (this->matrixSize % this->maxValuesPerBlock == 0)
+			pageNumber = this->matrixSize / this->maxValuesPerBlock * (x / this->maxValuesPerBlock);
 		else
 		{
-			pageNumber = ((this->matrixSize/this->maxValuesPerBlock + 1) * (x/this->maxValuesPerBlock));
+			pageNumber = ((this->matrixSize / this->maxValuesPerBlock + 1) * (x / this->maxValuesPerBlock));
 		}
 		cursor.nextPage(pageNumber);
 		y = 0;
-		cursor.moveCursor((x%this->maxValuesPerBlock)*this->maxValuesPerBlock);
+		cursor.moveCursor((x % this->maxValuesPerBlock) * this->maxValuesPerBlock);
 
-
-		while (y<matrixSize)
+		while (y < matrixSize)
 		{
 
 			element = cursor.getNext();
-			cout<<element<<", ";
+			cout << element << ", ";
 
-			y+=1;
-			if(y%(this->maxValuesPerBlock)==0 || y == this->matrixSize)
+			y += 1;
+			if (y % (this->maxValuesPerBlock) == 0 || y == this->matrixSize)
 			{
 				pageNumber += 1;
 				cursor.nextPage(pageNumber);
 				if (y >= grayArea && this->matrixSize != this->maxValuesPerBlock)
 				{
-					cursor.moveCursor((x%this->maxValuesPerBlock)*(this->matrixSize%this->maxValuesPerBlock));
+					cursor.moveCursor((x % this->maxValuesPerBlock) * (this->matrixSize % this->maxValuesPerBlock));
 				}
 				else
 				{
-					cursor.moveCursor((x%this->maxValuesPerBlock)*this->maxValuesPerBlock);
+					cursor.moveCursor((x % this->maxValuesPerBlock) * this->maxValuesPerBlock);
 				}
-
 			}
 		}
 		x += 1;
-		cout<<"\n";
+		cout << "\n";
 	}
 }
 
 void Matrix::transpose()
 {
 	logger.log("Matrix::transpose");
-	int superSize = (this->matrixSize % this->maxValuesPerBlock!=0) ? this->matrixSize/this->maxValuesPerBlock + 1 : this->matrixSize/this->maxValuesPerBlock;
+	int superSize = (this->matrixSize % this->maxValuesPerBlock != 0) ? this->matrixSize / this->maxValuesPerBlock + 1 : this->matrixSize / this->maxValuesPerBlock;
 
 	matrixBufferManager.clearPages();
 
-	for(int i=0; i<this->pageCount; i++)
+	for (int i = 0; i < this->pageCount; i++)
 	{
 		MatrixPage page = matrixBufferManager.getPage(this->matrixName, i);
 		int columnStride = 0;
 
 		if (this->matrixSize == this->maxValuesPerBlock)
 			columnStride = this->matrixSize;
-		else if (i%superSize != superSize-1 && i/superSize != superSize-1 )
+		else if (i % superSize != superSize - 1 && i / superSize != superSize - 1)
 		{
-			columnStride = this->maxValuesPerBlock;	
+			columnStride = this->maxValuesPerBlock;
 		}
-		else if (i%superSize == superSize-1 && i/superSize != superSize-1)
+		else if (i % superSize == superSize - 1 && i / superSize != superSize - 1)
 		{
 			columnStride = this->matrixSize - this->maxValuesPerBlock;
 		}
-		else if (i%superSize != superSize-1 && i/superSize == superSize-1)
+		else if (i % superSize != superSize - 1 && i / superSize == superSize - 1)
 		{
 			columnStride = this->maxValuesPerBlock;
 		}
@@ -296,9 +296,9 @@ void Matrix::transpose()
 
 		vector<int> transposedElements;
 		int size = page.getElementCount();
-		for(int i=0; i<columnStride; i++)
+		for (int i = 0; i < columnStride; i++)
 		{
-			for(int j=i; j<size; j+=columnStride)
+			for (int j = i; j < size; j += columnStride)
 			{
 				transposedElements.push_back(page.getElements(j));
 			}
@@ -309,23 +309,22 @@ void Matrix::transpose()
 
 	int x = 0, y = 0;
 
-	for (int i=0; i<this->pageCount; i++)
+	for (int i = 0; i < this->pageCount; i++)
 	{
-		x = i/superSize, y = i%superSize;
+		x = i / superSize, y = i % superSize;
 
-		if(x!=y && y>x)
+		if (x != y && y > x)
 		{
 			MatrixPage page = matrixBufferManager.getPage(this->matrixName, i);
-			page.renamePage(y*superSize+x);
+			page.renamePage(y * superSize + x);
 
-			MatrixPage transposePage = matrixBufferManager.getPage(this->matrixName, y*superSize+x);
+			MatrixPage transposePage = matrixBufferManager.getPage(this->matrixName, y * superSize + x);
 			transposePage.renamePage(i);
 
 			page.writePage();
 			transposePage.writePage();
 		}
 	}
-
 }
 
 void Matrix::sparseTranspose()
@@ -392,42 +391,42 @@ void Matrix::makePermanent()
 	int pageNumber = 0;
 	int x = 0, y = 0;
 	MatrixCursor cursor(this->matrixName, pageNumber);
-	int grayArea = this->matrixSize - (this->matrixSize%this->maxValuesPerBlock);
+	int grayArea = this->matrixSize - (this->matrixSize % this->maxValuesPerBlock);
 
-	while (x<matrixSize)
+	while (x < matrixSize)
 	{
-		if(this->matrixSize % this->maxValuesPerBlock == 0)
-			pageNumber = this->matrixSize/this->maxValuesPerBlock * (x/this->maxValuesPerBlock);
+		if (this->matrixSize % this->maxValuesPerBlock == 0)
+			pageNumber = this->matrixSize / this->maxValuesPerBlock * (x / this->maxValuesPerBlock);
 		else
-			pageNumber =  ((this->matrixSize/this->maxValuesPerBlock + 1) * (x/this->maxValuesPerBlock));
+			pageNumber = ((this->matrixSize / this->maxValuesPerBlock + 1) * (x / this->maxValuesPerBlock));
 
 		cursor.nextPage(pageNumber);
 		y = 0;
-		cursor.moveCursor((x%this->maxValuesPerBlock)*this->maxValuesPerBlock);
+		cursor.moveCursor((x % this->maxValuesPerBlock) * this->maxValuesPerBlock);
 
-		while (y<matrixSize)
+		while (y < matrixSize)
 		{
 			element = cursor.getNext();
-			
-			if (y == this->matrixSize-1)
+
+			if (y == this->matrixSize - 1)
 				fout << element << "\n";
-			else 
+			else
 				fout << element << ", ";
 
 			y += 1;
 
-			if (y%this->maxValuesPerBlock == 0 || y == this->matrixSize)
+			if (y % this->maxValuesPerBlock == 0 || y == this->matrixSize)
 			{
 				pageNumber += 1;
 				cursor.nextPage(pageNumber);
 
 				if (y >= grayArea)
 				{
-					cursor.moveCursor((x%this->maxValuesPerBlock)*(this->matrixSize % this->maxValuesPerBlock));
+					cursor.moveCursor((x % this->maxValuesPerBlock) * (this->matrixSize % this->maxValuesPerBlock));
 				}
 				else
 				{
-					cursor.moveCursor((x%this->maxValuesPerBlock)*this->maxValuesPerBlock);
+					cursor.moveCursor((x % this->maxValuesPerBlock) * this->maxValuesPerBlock);
 				}
 			}
 		}
@@ -496,7 +495,7 @@ void Matrix::unload()
 {
 	logger.log("Matrix::unload");
 
-	for (int i = 0; i<this->pageCount; i++)
+	for (int i = 0; i < this->pageCount; i++)
 		matrixBufferManager.deleteFile(this->matrixName, i);
 	if (!isPermanent())
 		matrixBufferManager.deleteFile(this->sourceFileName);
