@@ -73,7 +73,7 @@ bool Matrix::calculateSize(string line)
 	}
 	if (rowCount != size)
 		return false;
-	if (float(sparseCount) / float(size * size) >= 0.6)
+	if (float(sparseCount) / float(size * size) <= 0.4)
 	{
 		this->isSparse = true;
 		this->sparseElementCount = sparseCount;
@@ -171,12 +171,11 @@ void Matrix::sparsePrint()
 
 	MatrixCursor cursor(this->matrixName, 0);
 	SparseNode element;
-
 	while (elementCount < this->sparseElementCount)
 	{
 		element = cursor.sparseGetNext();
 		elementCount++;
-		if (element.column >= maxRows)
+		if (element.row >= maxRows)
 			break;
 		int elementValue = (element.row * this->matrixSize + element.column) - (currentRow * this->matrixSize + currentColumn);
 		int currentValue = 0, tempRow = currentRow, tempColumn = currentColumn;
@@ -268,6 +267,52 @@ void Matrix::transpose()
 
 void Matrix::sparseTranspose()
 {
+	logger.log("Matrix::sparseTranspose");
+
+	MatrixCursor cursor(this->matrixName, 0);
+	SparseNode element;
+	int elementCount = 0, pageIndex = 0;
+	while (elementCount < this->sparseElementCount)
+	{
+		element = cursor.sparseGetNext();
+		elementCount++;
+		int temp = element.row;
+		element.row = element.column;
+		element.column = temp;
+		cursor.sparsePutValue(element, pageIndex);
+		pageIndex++;
+		if (pageIndex == this->sparseMaxValuesPerBlock)
+			pageIndex = 0;
+	}
+	matrixBufferManager.reloadPages(this->matrixName);
+	MatrixCursor outerCursor(this->matrixName, 0);
+	int firstPage = 0, minIndex;
+
+	SparseNode firstNode, secondNode, minNode;
+	for (int i = 0; i < this->sparseElementCount - 1; i++)
+	{
+		firstNode = outerCursor.sparseGetNext();
+		minNode = firstNode;
+		minIndex = i;
+		MatrixCursor innerCursor = outerCursor;
+		for (int j = i + 1; j < this->sparseElementCount; j++)
+		{
+			secondNode = innerCursor.sparseGetNext();
+			if (secondNode.row < minNode.row || (secondNode.row == minNode.row && secondNode.column < minNode.column))
+			{
+				minNode = secondNode;
+				minIndex = j;
+			}
+		}
+		if (!(firstNode.row == minNode.row && firstNode.column == minNode.column))
+		{
+			outerCursor.sparsePutValue(minNode, i % this->sparseMaxValuesPerBlock);
+			innerCursor.gotoPage(minIndex / this->sparseMaxValuesPerBlock);
+			innerCursor.sparsePutValue(firstNode, minIndex % this->sparseMaxValuesPerBlock);
+			outerCursor.page.sparseReload();
+		}
+	}
+	matrixBufferManager.reloadPages(this->matrixName);
 }
 
 void Matrix::makePermanent()
@@ -368,8 +413,6 @@ void Matrix::getNextPage(MatrixCursor *cursor)
 	logger.log("Matrix::getNextPage");
 	if (cursor->pageIndex < this->pageCount - 1)
 		cursor->nextPage(cursor->pageIndex + 1);
-	else
-		cout << "won't get next page\n";
 }
 
 MatrixCursor Matrix::getCursor()

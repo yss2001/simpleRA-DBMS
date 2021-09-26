@@ -28,7 +28,9 @@ class MatrixPage{
 	int getElementCount();
 	int sparseGetElementCount();
 	void editPage(int value, int pageIndex);
+	void sparseEditPage(SparseNode value, int pageIndex);
 	void reload();
+	void sparseReload();
 	string getMatrixName(); 
 };
 #endif

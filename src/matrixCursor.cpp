@@ -26,7 +26,7 @@ int MatrixCursor::getNext()
 
 SparseNode MatrixCursor::sparseGetNext()
 {
-	if (this->pagePointer == this->page.getElementCount())
+	if (this->pagePointer == this->page.sparseGetElementCount())
 	{
 		matrixCatalogue.getMatrix(this->matrixName)->getNextPage(this);
 	}
@@ -49,4 +49,18 @@ void MatrixCursor::putValue(int value, int pageIndex)
 {
 	logger.log("MatrixCursor::putValue");
 	this->page.editPage(value, pageIndex);
+}
+
+void MatrixCursor::sparsePutValue(SparseNode value, int pageIndex)
+{
+	logger.log("MatrixCursor::sparsePutValue");
+	this->page.sparseEditPage(value, pageIndex);
+}
+
+void MatrixCursor::gotoPage(int pageId)
+{
+	logger.log("MatrixCursor::gotoPage");
+	this->page = matrixBufferManager.getPage(this->matrixName,pageId);
+	this->pagePointer = 0;
+	this->pageIndex = pageId;
 }

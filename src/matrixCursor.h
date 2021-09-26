@@ -15,6 +15,8 @@ class MatrixCursor{
 	int getNext();
 	SparseNode sparseGetNext();
 	void nextPage(int pageIndex);
-	void putValue(int index, int value);
+	void putValue(int value, int index);
+	void sparsePutValue(SparseNode value, int index);
+	void gotoPage(int pageId);
 };
 #endif

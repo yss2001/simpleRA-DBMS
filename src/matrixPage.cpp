@@ -91,6 +91,16 @@ void MatrixPage::editPage(int value, int pageIndex)
 	fin.close();
 }
 
+void MatrixPage::sparseEditPage(SparseNode value, int pageIndex)
+{
+	logger.log("MatrixPage::sparseEditPage");
+	this->sparseElements[pageIndex] = value;
+	fstream fin(this->pageName, ios::in | ios::out | ios::binary);
+	fin.seekp(pageIndex * sizeof(SparseNode), ios_base::beg);
+	fin.write(reinterpret_cast<const char *>(&value), sizeof(value));
+	fin.close();
+}
+
 void MatrixPage::writePage()
 {
 	logger.log("MatrixPage::writePage");
@@ -124,6 +134,21 @@ void MatrixPage::reload()
 	while (fin.read(reinterpret_cast<char *>(&element), sizeof(element)))
 	{
 		this->elements[i] = element;
+		i++;
+	}
+	fin.close();
+}
+
+void MatrixPage::sparseReload()
+{
+	logger.log("MatrixPage::sparseReload");
+	int i = 0;
+	SparseNode element;
+
+	ifstream fin(this->pageName, ios::in | ios::binary);
+	while (fin.read(reinterpret_cast<char *>(&element), sizeof(element)))
+	{
+		this->sparseElements[i] = element;
 		i++;
 	}
 	fin.close();
