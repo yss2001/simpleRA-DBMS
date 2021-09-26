@@ -370,10 +370,10 @@ void Matrix::sparseTranspose()
 		{
 			outerCursor.sparsePutValue(minNode, i % this->sparseMaxValuesPerBlock);
 			innerCursor.gotoPage(minIndex / this->sparseMaxValuesPerBlock);
-			innerCursor.page.sparseReload();
 			innerCursor.sparsePutValue(firstNode, minIndex % this->sparseMaxValuesPerBlock);
 			outerCursor.page.sparseReload();
 		}
+		matrixBufferManager.reloadPages(this->matrixName);
 	}
 	matrixBufferManager.reloadPages(this->matrixName);
 }
