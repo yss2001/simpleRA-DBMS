@@ -52,6 +52,13 @@ void MatrixBufferManager::writePage(string matrixName, int pageIndex, vector<int
 	matrixPage.writePage();
 }
 
+void MatrixBufferManager::sparseWritePage(string matrixName, int pageIndex, vector<SparseNode> elements)
+{
+	logger.log("MatrixBufferManager::sparseWritePage");
+	MatrixPage matrixPage(matrixName, pageIndex, elements);
+	matrixPage.sparseWritePage();
+}
+
 void MatrixBufferManager::deleteFile(string fileName)
 {
 	if (remove(fileName.c_str()))

@@ -11,17 +11,28 @@ MatrixPage::MatrixPage()
 
 MatrixPage::MatrixPage(string matrixName, int pageIndex)
 {
-	logger.log("MatrixPage::MatrixPage");
+	logger.log("MatrixPage::MatrixPage_a");
 	this->matrixName = matrixName;
 	this->pageIndex = pageIndex;
 	this->pageName = "../data/temp/" + this->matrixName + "_Page" + to_string(pageIndex);
 
 	ifstream fin(pageName, ios::in | ios::binary);
-	int element;
 
-	while (fin.read(reinterpret_cast<char *>(&element), sizeof(element)))
+	if (matrixCatalogue.getMatrix(this->matrixName)->isSparse)
 	{
-		this->elements.push_back(element);
+		SparseNode element;
+		while (fin.read(reinterpret_cast<char *>(&element), sizeof(element)))
+		{
+			this->sparseElements.push_back(element);
+		}
+	}
+	else
+	{
+		int element;
+		while (fin.read(reinterpret_cast<char *>(&element), sizeof(element)))
+		{
+			this->elements.push_back(element);
+		}
 	}
 
 	fin.close();
@@ -53,7 +64,7 @@ int MatrixPage::sparseGetElementCount()
 
 MatrixPage::MatrixPage(string matrixName, int pageIndex, vector<int> elements)
 {
-	logger.log("MatrixPage::MatrixPage");
+	logger.log("MatrixPage::MatrixPage_b");
 	this->matrixName = matrixName;
 	this->pageIndex = pageIndex;
 	this->elements = elements;
@@ -62,11 +73,12 @@ MatrixPage::MatrixPage(string matrixName, int pageIndex, vector<int> elements)
 
 MatrixPage::MatrixPage(string matrixName, int pageIndex, vector<SparseNode> sparseElements)
 {
-	logger.log("MatrixPage::MatrixPage");
+	logger.log("MatrixPage::MatrixPage_c");
 	this->matrixName = matrixName;
 	this->pageIndex = pageIndex;
 	this->sparseElements = sparseElements;
 	this->pageName = "../data/temp/" + this->matrixName + "_Page" + to_string(pageIndex);
+}
 
 void MatrixPage::editPage(int value, int pageIndex)
 {
@@ -75,7 +87,7 @@ void MatrixPage::editPage(int value, int pageIndex)
 
 	fstream fin(this->pageName, ios::in | ios::out | ios::binary);
 	fin.seekp(pageIndex * sizeof(int), ios_base::beg);
-	fin.write(reinterpret_cast<const char*>(&value), sizeof(value));
+	fin.write(reinterpret_cast<const char *>(&value), sizeof(value));
 	fin.close();
 }
 
@@ -83,9 +95,9 @@ void MatrixPage::writePage()
 {
 	logger.log("MatrixPage::writePage");
 	ofstream fout(this->pageName, ios::trunc | ios::out | ios::binary);
-	for (int element = 0; element < this->elements.size(); element ++)
+	for (int element = 0; element < this->elements.size(); element++)
 	{
-		fout.write(reinterpret_cast<const char*>(&elements[element]), sizeof(elements[element]));
+		fout.write(reinterpret_cast<const char *>(&elements[element]), sizeof(elements[element]));
 	}
 
 	fout.close();
@@ -95,9 +107,9 @@ void MatrixPage::sparseWritePage()
 {
 	logger.log("MatrixPage::sparseWritePage");
 	ofstream fout(this->pageName, ios::trunc | ios::out | ios::binary);
-	for (int element = 0; element < this->sparseElements.size(); element ++)
+	for (int element = 0; element < this->sparseElements.size(); element++)
 	{
-		fout.write(reinterpret_cast<const char*>(&sparseElements[element]), sizeof(sparseElements[element]));
+		fout.write(reinterpret_cast<const char *>(&sparseElements[element]), sizeof(sparseElements[element]));
 	}
 
 	fout.close();
@@ -106,7 +118,7 @@ void MatrixPage::sparseWritePage()
 void MatrixPage::reload()
 {
 	logger.log("MatrixPage::reload");
-	int i=0, element;
+	int i = 0, element;
 
 	ifstream fin(this->pageName, ios::in | ios::binary);
 	while (fin.read(reinterpret_cast<char *>(&element), sizeof(element)))

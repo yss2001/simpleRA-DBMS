@@ -34,7 +34,6 @@ SparseNode MatrixCursor::sparseGetNext()
 	logger.log("MatrixCursor::sparseGetNext");
 	SparseNode result = this->page.sparseGetElements(this->pagePointer);
 	this->pagePointer++;
-
 	return result;
 }
 
