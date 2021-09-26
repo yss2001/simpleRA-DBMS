@@ -18,7 +18,9 @@ class MatrixBufferManager{
 	void deleteFile(string fileName);
 	void writePage(string matrixName, int pageIndex, vector<int> elements);
 	void sparseWritePage(string matrixName, int pageIndex, vector<SparseNode> elements);
+	bool appendPage(string matrixName, int pageIndex, vector<int> elements);
 	void reloadPages(string matrixName);
+	void clearPages();
 };
 
 #endif

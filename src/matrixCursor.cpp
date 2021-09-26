@@ -45,10 +45,10 @@ void MatrixCursor::nextPage(int pageIndex)
 	this->pagePointer = 0;
 }
 
-void MatrixCursor::putValue(int value, int pageIndex)
+void MatrixCursor::moveCursor(int offset)
 {
-	logger.log("MatrixCursor::putValue");
-	this->page.editPage(value, pageIndex);
+	logger.log("MatrixCursor::moveCursor");
+	this->pagePointer += offset;
 }
 
 void MatrixCursor::sparsePutValue(SparseNode value, int pageIndex)

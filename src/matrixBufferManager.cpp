@@ -46,6 +46,12 @@ MatrixPage MatrixBufferManager::insertIntoPool(string matrixName, int pageIndex)
 	return matrixPage;
 }
 
+void MatrixBufferManager::clearPages()
+{
+	while (this->matrixPages.size())
+		matrixPages.pop_front();
+}
+
 void MatrixBufferManager::writePage(string matrixName, int pageIndex, vector<int> elements)
 {
 	logger.log("MatrixBufferManager::writePage");
@@ -58,6 +64,27 @@ void MatrixBufferManager::sparseWritePage(string matrixName, int pageIndex, vect
 	logger.log("MatrixBufferManager::sparseWritePage");
 	MatrixPage matrixPage(matrixName, pageIndex, elements);
 	matrixPage.sparseWritePage();
+}
+
+bool MatrixBufferManager::appendPage(string matrixName, int pageIndex, vector<int> elements)
+{
+	logger.log("MatrixBufferManager::appendPage");
+	string fileName = "../data/temp/" + matrixName + "_Page" + to_string(pageIndex);
+	struct stat buffer;
+	
+	if(stat(fileName.c_str(), &buffer) == 0)
+	{
+		MatrixPage matrixPage(matrixName, pageIndex, elements);
+		matrixPage.appendPage(elements);
+
+		return false;
+	}
+	else
+	{
+		writePage(matrixName, pageIndex, elements);
+		return true;
+	}
+
 }
 
 void MatrixBufferManager::deleteFile(string fileName)
