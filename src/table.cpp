@@ -189,6 +189,17 @@ bool Table::isColumn(string columnName)
     return false;
 }
 
+int Table::getColumnIndex(string columnName)
+{
+	logger.log("Table::getColumnIndex");
+	for (int i=0; i<this->columns.size(); i++)
+	{
+		if (this->columns[i] == columnName)
+			return i;
+	}
+	return -1;
+}
+
 /**
  * @brief Renames the column indicated by fromColumnName to toColumnName. It is
  * assumed that checks such as the existence of fromColumnName and the non prior
@@ -224,6 +235,7 @@ void Table::print()
 
     //print headings
     this->writeRow(this->columns, cout);
+    if (this->blockCount == 0) return;
 
     Cursor cursor(this->tableName, 0);
     vector<int> row;
@@ -326,7 +338,7 @@ Cursor Table::getCursor()
  * @param columnName 
  * @return int 
  */
-int Table::getColumnIndex(string columnName)
+/*int Table::getColumnIndex(string columnName)
 {
     logger.log("Table::getColumnIndex");
     for (int columnCounter = 0; columnCounter < this->columnCount; columnCounter++)
@@ -334,4 +346,4 @@ int Table::getColumnIndex(string columnName)
         if (this->columns[columnCounter] == columnName)
             return columnCounter;
     }
-}
+}*/

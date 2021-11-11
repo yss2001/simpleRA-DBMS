@@ -73,6 +73,8 @@ Page BufferManager::insertIntoPool(string tableName, int pageIndex)
     if (this->pages.size() >= BLOCK_COUNT)
         pages.pop_front();
     pages.push_back(page);
+
+    BLOCK_ACCESSES += 1;
     return page;
 }
 

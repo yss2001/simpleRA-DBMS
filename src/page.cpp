@@ -98,3 +98,8 @@ void Page::writePage()
     }
     fout.close();
 }
+
+vector<vector<int> >  Page::getAllRows()
+{
+	return this->rows;
+}
