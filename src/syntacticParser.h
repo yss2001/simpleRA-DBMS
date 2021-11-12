@@ -107,6 +107,7 @@ public:
     string groupByColumnName = "";
     string groupByOperatorName = "";
     string groupByAggregateColumnName = "";
+    string groupByResultRelationName = "";
 
 
     ParsedQuery();

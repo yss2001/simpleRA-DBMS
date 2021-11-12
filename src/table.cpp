@@ -332,6 +332,112 @@ Cursor Table::getCursor()
     Cursor cursor(this->tableName, 0);
     return cursor;
 }
+
+void Table::groupBy(string resultTableName, string columnName, string operatorName, string aggregateColumnName)
+{
+	logger.log("Table::groupBy");
+	BLOCK_ACCESSES = 0;
+	
+	vector<string> columns;
+	columns.push_back(columnName);
+	columns.push_back(operatorName+aggregateColumnName);
+
+	Table *resultTable = new Table(resultTableName, columns);
+
+	unordered_map<int, vector<int> > uniqueEntries;
+
+	Cursor cursor(this->tableName, 0);
+
+	vector<int> row = cursor.getNext();
+
+	int columnIndex = this->getColumnIndex(columnName);
+	int aggregateIndex = this->getColumnIndex(aggregateColumnName);
+
+	while (!row.empty())
+	{
+		if (uniqueEntries.find(row[columnIndex]) != uniqueEntries.end())
+		{
+			uniqueEntries[row[columnIndex]].push_back(row[aggregateIndex]);
+		}
+		else
+		{
+			vector<int> temp;
+			temp.push_back(row[aggregateIndex]);
+			uniqueEntries[row[columnIndex]] = temp;
+		}
+
+		row = cursor.getNext();
+	}
+
+	for (auto it = uniqueEntries.begin(); it != uniqueEntries.end(); it++)
+	{
+		int aggregateAnswer = 0;
+		if (operatorName == "MIN")
+		{
+			int min = it->second[0];
+
+			for (int i=1; i<it->second.size(); i++)
+			{
+				if (min > it->second[i]) min = it->second[i];
+			}
+
+			aggregateAnswer = min;
+
+		}
+
+		else if (operatorName == "MAX")
+		{
+			int max = it->second[0];
+
+			for (int i=1; i<it->second.size(); i++)
+			{
+				if (max < it->second[i]) max = it->second[i];
+			}
+
+			aggregateAnswer = max;
+		}
+
+		else if (operatorName == "SUM")
+		{
+			int sum = 0;
+
+			for (int i=0; i<it->second.size(); i++)
+			{
+				sum += it->second[i];
+			}
+
+			aggregateAnswer = sum;
+		}
+
+		else
+		{
+			int avg = 0, num = it->second.size();
+
+			for (int i=0; i<it->second.size(); i++)
+			{
+				avg += it->second[i];
+			}
+
+			avg = avg / num;
+
+			aggregateAnswer = avg;
+		}
+
+		vector<int> resultRow;
+		resultRow.push_back(it->first);
+		resultRow.push_back(aggregateAnswer);
+
+		resultTable->writeRow<int>(resultRow);
+	}
+
+	resultTable->blockify();
+	tableCatalogue.insertTable(resultTable);
+
+	cout << "Total block accesses: "<<BLOCK_ACCESSES<<"\n";
+	
+	return;
+}
+
 /**
  * @brief Function that returns the index of column indicated by columnName
  * 

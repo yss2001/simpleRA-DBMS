@@ -99,7 +99,7 @@ void Page::writePage()
     fout.close();
 }
 
-vector<vector<int> >  Page::getAllRows()
+vector<vector<int> >  &Page::getAllRows()
 {
 	return this->rows;
 }

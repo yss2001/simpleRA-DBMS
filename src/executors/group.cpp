@@ -26,6 +26,7 @@ bool syntacticParseGROUP()
 
 	parsedQuery.groupByOperatorName = aggregate;
 	parsedQuery.groupByColumnName = tokenizedQuery[4];
+	parsedQuery.groupByResultRelationName = tokenizedQuery[0];
 	parsedQuery.queryType = GROUP;
 	return true;
 }
@@ -39,11 +40,16 @@ bool semanticParseGROUP()
 		cout << "SEMANTIC ERROR: Group By relation doesn't exist" << endl;
 		return false;
 	}
-	return true;
 
 	if (!tableCatalogue.isColumnFromTable(parsedQuery.groupByColumnName, parsedQuery.groupByRelationName) || !tableCatalogue.isColumnFromTable(parsedQuery.groupByAggregateColumnName, parsedQuery.groupByRelationName))
 	{
 		cout << "SEMANTIC ERROR: Column doesn't exist in relation" << endl;
+		return false;
+	}
+
+	if (tableCatalogue.isTable(parsedQuery.groupByResultRelationName))
+	{
+		cout << "SEMANTIC ERROR: Relation already exists" << endl;
 		return false;
 	}
 
@@ -54,6 +60,7 @@ void executeGROUP()
 {
 	logger.log("executeGROUP");
 
-	cout<<"Implementing...\n";
+	Table* table = tableCatalogue.getTable(parsedQuery.groupByRelationName);
+	table->groupBy(parsedQuery.groupByResultRelationName, parsedQuery.groupByColumnName, parsedQuery.groupByOperatorName, parsedQuery.groupByAggregateColumnName);
 	return;
 }

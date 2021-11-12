@@ -122,6 +122,7 @@ void ParsedQuery::clear()
     this->groupByColumnName = "";
     this->groupByOperatorName = "";
     this->groupByAggregateColumnName = "";
+    this->groupByResultRelationName = "";
 }
 
 /**

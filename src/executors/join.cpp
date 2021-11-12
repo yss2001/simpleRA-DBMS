@@ -124,7 +124,7 @@ void nestedJOIN()
 	    for (int i=0; i<parsedQuery.joinBuffer-2; i++)
 	    {
 	    	Page curPage = bufferManager.getPage(firstTable.tableName, firstPageNumber);
-		vector<vector<int> > allRows = curPage.getAllRows();
+		vector<vector<int> > &allRows = curPage.getAllRows();
 
 		for (int i=0; i<allRows.size(); i++)
 		{
