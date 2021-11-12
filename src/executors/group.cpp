@@ -3,8 +3,7 @@
 bool syntacticParseGROUP()
 {
 	logger.log("syntacticParseGROUP");
-	string aggregate = "";
-	aggregate += tokenizedQuery[8][0] + tokenizedQuery[8][1] + tokenizedQuery[8][2];
+	string aggregate = tokenizedQuery[8].substr(0, 3);
 
 	if (tokenizedQuery.size() != 9 || tokenizedQuery[3] != "BY" || tokenizedQuery[5] != "FROM" || tokenizedQuery[7] != "RETURN")
 	{
@@ -27,7 +26,7 @@ bool syntacticParseGROUP()
 
 	parsedQuery.groupByOperatorName = aggregate;
 	parsedQuery.groupByColumnName = tokenizedQuery[4];
-
+	parsedQuery.queryType = GROUP;
 	return true;
 }
 

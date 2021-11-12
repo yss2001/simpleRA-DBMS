@@ -103,10 +103,10 @@ public:
 
     string sourceFileName = "";
 
-    /*string groupByRelationName = "";
+    string groupByRelationName = "";
     string groupByColumnName = "";
     string groupByOperatorName = "";
-    string groupByAggregateColumnName = "";*/
+    string groupByAggregateColumnName = "";
 
 
     ParsedQuery();
