@@ -66,7 +66,7 @@ bool semanticParseJOIN()
 
 void nestedJOIN()
 {
-    logger.log("executeJOIN");
+    logger.log("executeNestedJOIN");
     BLOCK_ACCESSES = 0;
 
     Table firstTable = *(tableCatalogue.getTable(parsedQuery.joinFirstRelationName));
@@ -78,7 +78,120 @@ void nestedJOIN()
 
     int index2 = 0;
     index2 = secondTable.getColumnIndex(parsedQuery.joinSecondColumnName);
-    
+
+    int prevCount = BLOCK_COUNT;
+    BLOCK_COUNT = parsedQuery.joinBuffer;
+
+    // Check for self-join
+    /*if(firstTable.tableName == secondTable.tableName)
+    {
+	    parsedQuery.joinFirstRelationName += "1";
+	    parsedQuery.joinSecondRelationName += "2";
+    }*/
+
+    vector<string> columns;
+
+    for (int columnCounter = 0; columnCounter < firstTable.columnCount; columnCounter++)
+    {
+        // Check for recurring column names
+        /*string columnName = firstTable.columns[columnCounter];
+	    if (secondTable.isColumn(columnName))
+	    {
+		    columnName = parsedQuery.joinFirstRelationName + "_" + columnName;
+	    }
+	    columns.emplace_back(columnName);*/
+        columns.emplace_back(firstTable.columns[columnCounter]);
+    }
+
+    for (int columnCounter = 0; columnCounter < secondTable.columnCount; columnCounter++)
+    {
+        // Check for recurring column names
+        /*string columnName = secondTable.columns[columnCounter];
+	    if (firstTable.isColumn(columnName))
+	    {
+		    columnName = parsedQuery.joinSecondRelationName + "_" + columnName;
+	    }
+	    columns.emplace_back(columnName);*/
+        columns.emplace_back(secondTable.columns[columnCounter]);
+    }
+
+    Table *joinTable = new Table(parsedQuery.joinResultRelationName, columns);
+
+    int firstPageNumber = 0;
+
+    unordered_map<int, vector<vector<int>>> pageBatch;
+
+    while (firstPageNumber < firstTable.blockCount)
+    {
+        pageBatch.clear();
+        for (int _ = 0; _ < parsedQuery.joinBuffer - 2; _++)
+        {
+            Page curPage = bufferManager.getPage(firstTable.tableName, firstPageNumber);
+            vector<vector<int>> &allRows = curPage.getAllRows();
+
+            for (int i = 0; i < allRows.size(); i++)
+            {
+                int key = allRows[i][index1];
+
+                if (pageBatch.find(key) != pageBatch.end())
+                    pageBatch[key].push_back(allRows[i]);
+                else
+                {
+                    vector<vector<int>> temp;
+                    temp.push_back(allRows[i]);
+                    pageBatch[key] = temp;
+                }
+            }
+            firstPageNumber += 1;
+            if (firstPageNumber == firstTable.blockCount)
+                break;
+        }
+        Cursor cursor = secondTable.getCursor();
+        vector<int> row = cursor.getNext();
+        vector<int> joinRow;
+        joinRow.reserve(joinTable->columnCount);
+
+        while (!row.empty())
+        {
+            if (pageBatch.find(row[index2]) != pageBatch.end())
+            {
+                vector<vector<int>> matchedRows = pageBatch[row[index2]];
+                for (int i = 0; i < matchedRows.size(); i++)
+                {
+                    joinRow = matchedRows[i];
+                    joinRow.insert(joinRow.end(), row.begin(), row.end());
+                    joinTable->writeRow<int>(joinRow);
+                }
+            }
+            row = cursor.getNext();
+        }
+    }
+    joinTable->blockify();
+    tableCatalogue.insertTable(joinTable);
+
+    BLOCK_COUNT = prevCount;
+    bufferManager.resetBufferManager();
+    cout << "Total block accesses: " << BLOCK_ACCESSES << "\n";
+    BLOCK_ACCESSES = 0;
+
+    return;
+}
+
+void parthashJOIN()
+{
+    logger.log("executeParthashJOIN");
+    BLOCK_ACCESSES = 0;
+
+    Table firstTable = *(tableCatalogue.getTable(parsedQuery.joinFirstRelationName));
+
+    int index1 = 0;
+    index1 = firstTable.getColumnIndex(parsedQuery.joinFirstColumnName);
+
+    Table secondTable = *(tableCatalogue.getTable(parsedQuery.joinSecondRelationName));
+
+    int index2 = 0;
+    index2 = secondTable.getColumnIndex(parsedQuery.joinSecondColumnName);
+
     int prevCount = BLOCK_COUNT;
     BLOCK_COUNT = parsedQuery.joinBuffer;
 
@@ -92,83 +205,84 @@ void nestedJOIN()
 
     for (int columnCounter = 0; columnCounter < firstTable.columnCount; columnCounter++)
     {
-	    /*string columnName = firstTable.columns[columnCounter];
+        /*string columnName = firstTable.columns[columnCounter];
 	    if (secondTable.isColumn(columnName))
 	    {
 		    columnName = parsedQuery.joinFirstRelationName + "_" + columnName;
 	    }
 	    columns.emplace_back(columnName);*/
-	    columns.emplace_back(firstTable.columns[columnCounter]);
+        columns.emplace_back(firstTable.columns[columnCounter]);
     }
 
     for (int columnCounter = 0; columnCounter < secondTable.columnCount; columnCounter++)
     {
-	    /*string columnName = secondTable.columns[columnCounter];
+        /*string columnName = secondTable.columns[columnCounter];
 	    if (firstTable.isColumn(columnName))
 	    {
 		    columnName = parsedQuery.joinSecondRelationName + "_" + columnName;
 	    }
 	    columns.emplace_back(columnName);*/
-	    columns.emplace_back(secondTable.columns[columnCounter]);
+        columns.emplace_back(secondTable.columns[columnCounter]);
     }
 
     Table *joinTable = new Table(parsedQuery.joinResultRelationName, columns);
 
     int firstPageNumber = 0;
 
-    unordered_map<int, vector<vector<int> > > pageBatch;
+    unordered_map<int, vector<vector<int>>> pageBatch;
 
     while (firstPageNumber < firstTable.blockCount)
     {
-	    pageBatch.clear();
-	    for (int i=0; i<parsedQuery.joinBuffer-2; i++)
-	    {
-	    	Page curPage = bufferManager.getPage(firstTable.tableName, firstPageNumber);
-		vector<vector<int> > &allRows = curPage.getAllRows();
+        pageBatch.clear();
+        for (int i = 0; i < parsedQuery.joinBuffer - 2; i++)
+        {
+            Page curPage = bufferManager.getPage(firstTable.tableName, firstPageNumber);
+            vector<vector<int>> &allRows = curPage.getAllRows();
 
-		for (int i=0; i<allRows.size(); i++)
-		{
-			int key = allRows[i][index1];
+            for (int i = 0; i < allRows.size(); i++)
+            {
+                int key = allRows[i][index1];
 
-			if (pageBatch.find(key) != pageBatch.end())
-				pageBatch[key].push_back(allRows[i]);
-			else
-			{
-				vector<vector<int> > temp;
-				temp.push_back(allRows[i]);
-				pageBatch[key] = temp;
-			}
-		}
-		firstPageNumber += 1;
-		if (firstPageNumber == firstTable.blockCount)
-			break;
-	    }
-	    Cursor cursor = secondTable.getCursor();
-	    vector<int> row = cursor.getNext();
-	    vector<int> joinRow;
-	    joinRow.reserve(joinTable->columnCount);
+                if (pageBatch.find(key) != pageBatch.end())
+                    pageBatch[key].push_back(allRows[i]);
+                else
+                {
+                    vector<vector<int>> temp;
+                    temp.push_back(allRows[i]);
+                    pageBatch[key] = temp;
+                }
+            }
+            firstPageNumber += 1;
+            if (firstPageNumber == firstTable.blockCount)
+                break;
+        }
+        Cursor cursor = secondTable.getCursor();
+        vector<int> row = cursor.getNext();
+        vector<int> joinRow;
+        joinRow.reserve(joinTable->columnCount);
 
-	    while (!row.empty())
-	    {
-		    if (pageBatch.find(row[index2]) != pageBatch.end())
-		    {
-			    vector<vector<int >> matchedRows = pageBatch[row[index2]];
-			    for (int i=0; i<matchedRows.size(); i++)
-			    {
-				    joinRow = matchedRows[i];
-				    joinRow.insert(joinRow.end(), row.begin(), row.end());
-				    joinTable->writeRow<int>(joinRow);
-			    }
-		    }
-		    row = cursor.getNext();
-	    }
-
+        while (!row.empty())
+        {
+            if (pageBatch.find(row[index2]) != pageBatch.end())
+            {
+                vector<vector<int>> matchedRows = pageBatch[row[index2]];
+                for (int i = 0; i < matchedRows.size(); i++)
+                {
+                    joinRow = matchedRows[i];
+                    joinRow.insert(joinRow.end(), row.begin(), row.end());
+                    joinTable->writeRow<int>(joinRow);
+                }
+            }
+            row = cursor.getNext();
+        }
     }
     joinTable->blockify();
     tableCatalogue.insertTable(joinTable);
 
     BLOCK_COUNT = prevCount;
-    cout<<"Total block accesses: "<<BLOCK_ACCESSES<<"\n";
+    bufferManager.resetBufferManager();
+    cout << "Total block accesses: " << BLOCK_ACCESSES << "\n";
+    BLOCK_ACCESSES = 0;
 
     return;
 }
@@ -176,8 +290,10 @@ void nestedJOIN()
 void executeJOIN()
 {
     logger.log("executeJOIN");
-    
-    if (tokenizedQuery[4] == "NESTED") nestedJOIN();
-    else if (tokenizedQuery[4] == "PARTHASH") cout<<"Implementing...\n";
+
+    if (tokenizedQuery[4] == "NESTED")
+        nestedJOIN();
+    else if (tokenizedQuery[4] == "PARTHASH")
+        parthashJOIN();
     return;
 }

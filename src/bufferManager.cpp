@@ -78,6 +78,18 @@ Page BufferManager::insertIntoPool(string tableName, int pageIndex)
     return page;
 }
 
+/** 
+ * @brief This function is responsible for reducing the deque size of the buffer manager in case of resizing in JOIN.
+ */
+void BufferManager::resetBufferManager()
+{
+    logger.log("BufferManager::resetBufferManager");
+    while (this->pages.size() > BLOCK_COUNT)
+    {
+        pages.pop_front();
+    }
+}
+
 /**
  * @brief The buffer manager is also responsible for writing pages. This is
  * called when new tables are created using assignment statements.
@@ -92,6 +104,8 @@ void BufferManager::writePage(string tableName, int pageIndex, vector<vector<int
     logger.log("BufferManager::writePage");
     Page page(tableName, pageIndex, rows, rowCount);
     page.writePage();
+    
+    BLOCK_ACCESSES += 1;
 }
 
 /**

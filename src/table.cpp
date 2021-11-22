@@ -434,7 +434,8 @@ void Table::groupBy(string resultTableName, string columnName, string operatorNa
 	tableCatalogue.insertTable(resultTable);
 
 	cout << "Total block accesses: "<<BLOCK_ACCESSES<<"\n";
-	
+	BLOCK_ACCESSES = 0;
+    
 	return;
 }
 
