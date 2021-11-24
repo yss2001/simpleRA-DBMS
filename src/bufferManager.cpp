@@ -115,7 +115,7 @@ void BufferManager::writePage(string tableName, int pageIndex, vector<vector<int
  */
 void BufferManager::deleteFile(string fileName)
 {
-    
+    logger.log("BufferManager::deleteFile");
     if (remove(fileName.c_str()))
         logger.log("BufferManager::deleteFile: Err");
         else logger.log("BufferManager::deleteFile: Success");
