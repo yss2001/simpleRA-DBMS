@@ -195,19 +195,14 @@ void parthashJOIN()
     while (!firstRow.empty())
     {
         int hashValue = (long long int)(firstRow[firstIndex] * HASH_VALUE) % (parsedQuery.joinBuffer - 1);
-        string partitionName = parsedQuery.joinFirstRelationName + "Partition";
+        string partitionName = parsedQuery.joinFirstRelationName + "Partition" + to_string(hashValue);
         if (partitionCheck[hashValue] == 0)
-        {
-            vector<vector<int>> writeRows;
-            writeRows.push_back(firstRow);
-            bufferManager.writePage(partitionName, hashValue, writeRows, 1);
-            partitionCheck[hashValue]++;
+        {   
+            Table *partitionTable = new Table(parsedQuery.joinFirstRelationName, firstTable.columns);
+            tableCatalogue.insertTable(partitionTable);
         }
-        else
-        {
-            bufferManager.getPage(partitionName, hashValue);
-            // TOWRITE - PAGE UPDATE
-        }
+        bufferManager.appendPage(partitionName,firstRow);
+        partitionCheck[hashValue]++;
     }
 
     Table secondTable = *(tableCatalogue.getTable(parsedQuery.joinSecondRelationName));
@@ -221,18 +216,13 @@ void parthashJOIN()
     while (!secondRow.empty())
     {
         int hashValue = (long long int)(secondRow[secondIndex] * HASH_VALUE) % (parsedQuery.joinBuffer - 1);
-        string partitionName = parsedQuery.joinSecondRelationName + "Partition";
+        string partitionName = parsedQuery.joinSecondRelationName + "Partition" + to_string(hashValue);
         if (partitionCheck[hashValue] == 0)
-        {
-            vector<vector<int>> writeRows;
-            writeRows.push_back(secondRow);
-            bufferManager.writePage(partitionName, hashValue, writeRows, 1);
+        {   
+            Table *partitionTable = new Table(parsedQuery.joinSecondRelationName, secondTable.columns);
+            tableCatalogue.insertTable(partitionTable);
         }
-        else
-        {
-            bufferManager.getPage(partitionName, hashValue);
-            // TOWRITE - PAGE UPDATE
-        }
+        bufferManager.appendPage(partitionName,secondRow);
         partitionCheck[hashValue]++;
     }
 

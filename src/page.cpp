@@ -103,3 +103,14 @@ vector<vector<int> >  &Page::getAllRows()
 {
 	return this->rows;
 }
+
+int Page::getRowCount()
+{
+    return this->rowCount;
+}
+
+void Page::appendRow(vector <int> row)
+{
+    this->rows.push_back(row);
+    this->rowCount ++;
+}

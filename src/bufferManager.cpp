@@ -74,7 +74,7 @@ Page BufferManager::insertIntoPool(string tableName, int pageIndex)
         pages.pop_front();
     pages.push_back(page);
 
-    BLOCK_ACCESSES += 1;
+    BLOCK_ACCESSES ++;
     return page;
 }
 
@@ -105,7 +105,42 @@ void BufferManager::writePage(string tableName, int pageIndex, vector<vector<int
     Page page(tableName, pageIndex, rows, rowCount);
     page.writePage();
     
-    BLOCK_ACCESSES += 1;
+    BLOCK_ACCESSES ++;
+}
+
+void BufferManager::commitPages()
+{
+    logger.log("BufferManager::commitPages");
+    for (auto page : this->pages)
+    {
+        page.writePage();
+        BLOCK_ACCESSES ++;
+    }
+}
+
+void BufferManager::appendPage(string tableName, vector<int> row)
+{
+    logger.log("BufferManager::appendPage");
+    Table *outTable = tableCatalogue.getTable(tableName);
+    Page outPage = this->getPage(tableName,outTable->blockCount-1);
+    if(outPage.getRowCount() == outTable->maxRowsPerBlock)
+    {
+        outPage.writePage();
+        outTable->blockCount ++;
+        if (this->pages.size() >= BLOCK_COUNT)
+        {    
+            Page delPage = pages.front();
+            delPage.writePage();
+            pages.pop_front();
+            BLOCK_ACCESSES += 1;
+        }
+        Page appendPage(tableName,outTable->blockCount-1);
+        appendPage.appendRow(row);
+        pages.push_back(appendPage);
+        BLOCK_ACCESSES += 2;
+    }
+    else
+        outPage.appendRow(row);    
 }
 
 /**
