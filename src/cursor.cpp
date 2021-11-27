@@ -18,7 +18,7 @@ Cursor::Cursor(string tableName, int pageIndex)
  */
 vector<int> Cursor::getNext()
 {
-    logger.log("Cursor::geNext");
+    logger.log("Cursor::getNext");
     vector<int> result = this->page.getRow(this->pagePointer);
     this->pagePointer++;
     if(result.empty()){
@@ -26,6 +26,19 @@ vector<int> Cursor::getNext()
         if(!this->pagePointer){
             result = this->page.getRow(this->pagePointer);
             this->pagePointer++;
+        }
+    }
+    return result;
+}
+
+vector<int> Cursor::getRow()
+{
+    logger.log("Cursor::getRow");
+    vector<int> result = this->page.getRow(this->pagePointer);
+    if(result.empty()) {
+        tableCatalogue.getTable(this->tableName)->getNextPage(this);
+        if(!this->pagePointer){
+            result = this->page.getRow(this->pagePointer);
         }
     }
     return result;

@@ -62,6 +62,8 @@ bool semanticParseSORT(){
 void executeSORT(){
     logger.log("executeSORT");
 
+    int prevCount = BLOCK_COUNT;
+    BLOCK_COUNT = parsedQuery.sortBuffer;
     Table *sortTable = tableCatalogue.getTable(parsedQuery.sortRelationName);
     int sortIndex = sortTable->getColumnIndex(parsedQuery.sortColumnName);
     
@@ -73,7 +75,7 @@ void executeSORT(){
 
     for(int subFileCounter = 0;subFileCounter < subFileCount;subFileCounter++)
     {
-        subFile.push_back(string("SubFile_"+to_string(subFileCounter)));
+        subFile.push_back(string("SubFile_"+to_string(subFileCounter)+"__phase_0"));
         Table *subFileTable = new Table(subFile[subFileCounter],sortTable->columns);
         tableCatalogue.insertTable(subFileTable);
         vector<vector<int>> sortTableRows;
@@ -84,7 +86,7 @@ void executeSORT(){
             for(int i=0;i<sortPage.getRowCount();i++)
                 sortTableRows.push_back(blockRows[i]);
         }   
-        cout<<sortTableRows.size()<<endl;
+        //cout<<sortTableRows.size()<<endl;
         
         
         // TO CHECK     
@@ -104,7 +106,7 @@ void executeSORT(){
             rowPageCounter++;
             if(rowCounter == sortTableRows.size() || rowPageCounter == sortTable->maxRowsPerBlock)
             {
-                cout<<rowCounter<<endl;
+                //cout<<rowCounter<<endl;
                 subFileTable->blockCount ++;
                 subFileTable->rowCount += outRows.size();
                 subFileTable->rowsPerBlockCount.emplace_back(outRows.size());
@@ -117,8 +119,62 @@ void executeSORT(){
     }
     cout<<"SubFiles Generated..."<<endl;
 
-    
-
+    int subFileMergeCounter = subFileCount,prevPhaseCounter = 0;
+    while(subFileMergeCounter != 1)
+    {
+        int mergeIterations = ceil(float(subFileMergeCounter)/float(parsedQuery.sortBuffer));
+        vector <string> mergeFile;
+        for(int mergeFileCounter = 0;mergeFileCounter < mergeIterations;mergeFileCounter++)
+        {   
+            mergeFile.push_back(string("SubFile_"+to_string(mergeFileCounter)+"__phase_"+to_string(mergeFileCounter)));
+            Table *mergeFileTable = new Table(mergeFile[mergeFileCounter],sortTable->columns);
+            tableCatalogue.insertTable(mergeFileTable);
+            vector <Cursor> cursorManager;
+            vector <vector <int>> outRows;
+            for(int subFileCounter = mergeFileCounter*parsedQuery.sortBuffer;subFileCounter<min(subFileMergeCounter,(mergeFileCounter+1)*parsedQuery.sortBuffer);subFileCounter++)
+            {
+                string subFileName = "SubFile_"+to_string(subFileCounter)+"__phase_"+to_string(prevPhaseCounter);
+                cursorManager.push_back(tableCatalogue.getTable(subFileName)->getCursor());
+            }
+            int exitFlag = 0,minSubFile = 1e9,minValue = 1e9, pageCounter = 0;
+            while(true)
+            {
+                exitFlag = 0,minSubFile = 1e9,minValue = 1e9;
+                for(int mergeCounter = 0; mergeCounter < cursorManager.size();mergeCounter++)
+                {
+                    vector <int> subFileRow = cursorManager[mergeCounter].getNext();
+                    if(subFileRow[sortIndex] < minValue)
+                    {
+                        exitFlag = 1;
+                        minSubFile = mergeCounter;
+                        minValue = subFileRow[sortIndex];
+                    }
+                }
+                if(exitFlag == 0) {
+                    if(outRows.size() != 0)
+                    {
+                        mergeFileTable->blockCount ++;
+                        mergeFileTable->rowCount += outRows.size();
+                        mergeFileTable->rowsPerBlockCount.emplace_back(outRows.size());
+                        bufferManager.writePage(mergeFile[mergeFileCounter],pageCounter,outRows,outRows.size());
+                    }
+                    break;
+                }
+                vector <int> outRow = cursorManager[minSubFile].getNext();
+                outRows.push_back(outRow);
+                if(outRows.size() == sortTable->maxRowsPerBlock)
+                {
+                    mergeFileTable->blockCount ++;
+                    mergeFileTable->rowCount += outRows.size();
+                    mergeFileTable->rowsPerBlockCount.emplace_back(outRows.size());
+                    bufferManager.writePage(mergeFile[mergeFileCounter],pageCounter,outRows,outRows.size());
+                    pageCounter++;
+                    outRows.clear();
+                }
+            }
+        }
+        subFileMergeCounter = mergeIterations;
+    }
     
     return;
 }
