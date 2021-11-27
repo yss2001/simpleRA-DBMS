@@ -9,7 +9,7 @@
  */
 bool syntacticParseSORT(){
     logger.log("syntacticParseSORT");
-    if(tokenizedQuery.size()!= 8 || tokenizedQuery[4] != "BY" || tokenizedQuery[6] != "IN"){
+    if((tokenizedQuery.size()!= 8 || (tokenizedQuery.size() == 10 && tokenizedQuery[8] != "BUFFER")) || tokenizedQuery[4] != "BY" || tokenizedQuery[6] != "IN"){
         cout<<"SYNTAX ERROR"<<endl;
         return false;
     }
@@ -26,6 +26,10 @@ bool syntacticParseSORT(){
         cout<<"SYNTAX ERROR"<<endl;
         return false;
     }
+    if(tokenizedQuery.size() == 10)
+        parsedQuery.sortBuffer = stoi(tokenizedQuery[9]);
+    else
+        parsedQuery.sortBuffer = BLOCK_COUNT;
     return true;
 }
 
@@ -46,11 +50,69 @@ bool semanticParseSORT(){
         cout<<"SEMANTIC ERROR: Column doesn't exist in relation"<<endl;
         return false;
     }
+    if(parsedQuery.sortBuffer < 1){
+        cout<<"SEMANTIC ERROR: Invalid buffer size";
+        return false;
+    }
 
     return true;
 }
 
 void executeSORT(){
     logger.log("executeSORT");
+    BLOCK_COUNT = parsedQuery.sortBuffer;
+    int prevCount = BLOCK_COUNT;
+
+    Table *sortTable = tableCatalogue.getTable(parsedQuery.sortRelationName);
+    int sortIndex = sortTable->getColumnIndex(parsedQuery.sortColumnName);
+    
+    int subFileCount = ceil(float(sortTable->blockCount)/float(parsedQuery.sortBuffer));
+    int mergeFileCount = ceil(log(subFileCount)/log(min(subFileCount,parsedQuery.sortBuffer-1)));
+
+    cout<<subFileCount<<" "<<mergeFileCount<<endl;
+    vector <string> subFile;
+
+    for(int subFileCounter = 0;subFileCounter < subFileCount;subFileCounter++)
+    {
+        subFile.push_back(string("SubFile_"+to_string(subFileCounter)));
+        Table *subFileTable = new Table(subFile[subFileCounter],sortTable->columns);
+        tableCatalogue.insertTable(subFileTable);
+        vector<vector<int>> sortTableRows;
+        for(int blockCounter = subFileCounter*BLOCK_COUNT;blockCounter<min(sortTable->blockCount,(subFileCounter+1)*BLOCK_COUNT);blockCounter++)
+        {
+            Page sortPage = bufferManager.getPage(sortTable->tableName,blockCounter);
+            vector<vector<int>> &blockRows = sortPage.getAllRows();
+            for(int i=0;i<blockRows.size();i++)
+                sortTableRows.push_back(blockRows[i]);
+        }   
+        // TO CHECK     
+        // sort(sortTableRows.begin(),sortTableRows.end(),
+        //         [](const vector<int>& a, const vector<int> &b) {
+        //             return a[sortIndex] < b[sortIndex];
+        //         });
+        // BLACK BOX HERE
+        int rowCounter = 0,pageCounter = 0, rowPageCounter = 0;
+        vector <vector <int> > outRows;
+        while(rowCounter < sortTableRows.size())
+        {
+            outRows.push_back(sortTableRows[rowCounter]);
+            rowCounter++;
+            rowPageCounter++;
+            if(rowCounter == sortTableRows.size()-1 || rowPageCounter == sortTable->maxRowsPerBlock)
+            {
+                subFileTable->blockCount ++;
+                subFileTable->rowCount += outRows.size();
+                subFileTable->rowsPerBlockCount.emplace_back(outRows.size());
+                bufferManager.writePage(subFile[subFileCounter],pageCounter,outRows,outRows.size());
+                rowPageCounter = 0;
+                pageCounter = 0;
+            }
+        }
+    }
+    cout<<"SubFiles Generated..."<<endl;
+
+    
+
+    
     return;
 }

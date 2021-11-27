@@ -79,6 +79,16 @@ Page::Page(string tableName, int pageIndex, vector<vector<int>> rows, int rowCou
 }
 
 /**
+ * @brief returns all rows of the page
+ * 
+ */
+vector<vector<int> >  &Page::getAllRows()
+{
+    logger.log("Page::getAllRows");
+	return this->rows;
+}
+
+/**
  * @brief writes current page contents to file.
  * 
  */
