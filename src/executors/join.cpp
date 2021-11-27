@@ -135,7 +135,7 @@ void nestedJOIN()
             Page curPage = bufferManager.getPage(firstTable.tableName, firstPageNumber);
             vector<vector<int>> &allRows = curPage.getAllRows();
 
-            for (int i = 0; i < allRows.size(); i++)
+            for (int i = 0; i < curPage.getRowCount(); i++)
             {
                 int key = allRows[i][index1];
 
