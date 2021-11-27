@@ -71,9 +71,27 @@ Page BufferManager::insertIntoPool(string tableName, int pageIndex)
     logger.log("BufferManager::insertIntoPool");
     Page page(tableName, pageIndex);
     if (this->pages.size() >= BLOCK_COUNT)
+    {
+        if(BUFFER_WRITE_FLAG == 1)
+            pages.front().writePage();
         pages.pop_front();
+    }
     pages.push_back(page);
+
+    BLOCK_ACCESSES ++;
     return page;
+}
+
+/** 
+ * @brief This function is responsible for reducing the deque size of the buffer manager in case of resizing in JOIN.
+ */
+void BufferManager::resetBufferManager()
+{
+    logger.log("BufferManager::resetBufferManager");
+    while (this->pages.size() > BLOCK_COUNT)
+    {
+        pages.pop_front();
+    }
 }
 
 /**
@@ -90,6 +108,57 @@ void BufferManager::writePage(string tableName, int pageIndex, vector<vector<int
     logger.log("BufferManager::writePage");
     Page page(tableName, pageIndex, rows, rowCount);
     page.writePage();
+    
+    BLOCK_ACCESSES ++;
+}
+
+void BufferManager::commitPages()
+{
+    logger.log("BufferManager::commitPages");
+    for (auto page : this->pages)
+    {
+        page.writePage();
+        BLOCK_ACCESSES ++;
+    }
+}
+
+void BufferManager::appendPage(string tableName, vector<int> row)
+{
+    logger.log("BufferManager::appendPage");
+    Table *outTable = tableCatalogue.getTable(tableName);
+    string pageName = "../data/temp/"+tableName + "_Page" + to_string(outTable->blockCount-1);
+    deque<Page>::iterator pageIterator;
+    for(pageIterator = pages.begin();pageIterator != pages.end();pageIterator++)
+        if(pageIterator->pageName == pageName)
+            break;
+    if(pageIterator == pages.end())
+    {
+        pageIterator = pages.begin();
+        pageIterator->writePage();
+        BLOCK_ACCESSES += 1;
+        this->insertIntoPool(tableName,outTable->blockCount-1);
+        for(pageIterator = pages.begin();pageIterator != pages.end();pageIterator++)
+            if(pageIterator->pageName == pageName)
+                break;
+    }
+    if(pageIterator->getRowCount() == outTable->maxRowsPerBlock)
+    {
+        pageIterator->writePage();
+        outTable->blockCount ++;
+        outTable->rowsPerBlockCount.emplace_back(1);
+        outTable->rowCount ++;
+        vector<vector<int>> temp;
+        temp.push_back(row);    
+        Page appendPage(tableName,outTable->blockCount-1,temp,1);
+        appendPage.writePage();
+        BLOCK_ACCESSES += 2;
+    }
+    else
+    {
+        outTable->rowsPerBlockCount[outTable->rowsPerBlockCount.size()-1]++;
+        outTable->rowCount++;
+        pageIterator->appendRow(row);
+    }    
 }
 
 /**
@@ -99,7 +168,7 @@ void BufferManager::writePage(string tableName, int pageIndex, vector<vector<int
  */
 void BufferManager::deleteFile(string fileName)
 {
-    
+    logger.log("BufferManager::deleteFile");
     if (remove(fileName.c_str()))
         logger.log("BufferManager::deleteFile: Err");
         else logger.log("BufferManager::deleteFile: Success");

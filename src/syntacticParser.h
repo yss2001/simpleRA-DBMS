@@ -18,6 +18,7 @@ enum QueryType
     SELECTION,
     SORT,
     SOURCE,
+    GROUP,
     UNDETERMINED
 };
 
@@ -73,6 +74,7 @@ public:
     string joinSecondRelationName = "";
     string joinFirstColumnName = "";
     string joinSecondColumnName = "";
+    int joinBuffer = 0;
 
     string loadRelationName = "";
 
@@ -101,6 +103,13 @@ public:
 
     string sourceFileName = "";
 
+    string groupByRelationName = "";
+    string groupByColumnName = "";
+    string groupByOperatorName = "";
+    string groupByAggregateColumnName = "";
+    string groupByResultRelationName = "";
+
+
     ParsedQuery();
     void clear();
 };
@@ -120,6 +129,7 @@ bool syntacticParseRENAME();
 bool syntacticParseSELECTION();
 bool syntacticParseSORT();
 bool syntacticParseSOURCE();
+bool syntacticParseGROUP();
 
 bool isFileExists(string tableName);
 bool isQueryFile(string fileName);

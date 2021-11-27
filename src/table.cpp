@@ -189,6 +189,17 @@ bool Table::isColumn(string columnName)
     return false;
 }
 
+int Table::getColumnIndex(string columnName)
+{
+	logger.log("Table::getColumnIndex");
+	for (int i=0; i<this->columns.size(); i++)
+	{
+		if (this->columns[i] == columnName)
+			return i;
+	}
+	return -1;
+}
+
 /**
  * @brief Renames the column indicated by fromColumnName to toColumnName. It is
  * assumed that checks such as the existence of fromColumnName and the non prior
@@ -224,6 +235,7 @@ void Table::print()
 
     //print headings
     this->writeRow(this->columns, cout);
+    if (this->blockCount == 0) return;
 
     Cursor cursor(this->tableName, 0);
     vector<int> row;
@@ -320,13 +332,120 @@ Cursor Table::getCursor()
     Cursor cursor(this->tableName, 0);
     return cursor;
 }
+
+void Table::groupBy(string resultTableName, string columnName, string operatorName, string aggregateColumnName)
+{
+	logger.log("Table::groupBy");
+	BLOCK_ACCESSES = 0;
+	
+	vector<string> columns;
+	columns.push_back(columnName);
+	columns.push_back(operatorName+aggregateColumnName);
+
+	Table *resultTable = new Table(resultTableName, columns);
+
+	unordered_map<int, vector<int> > uniqueEntries;
+
+	Cursor cursor(this->tableName, 0);
+
+	vector<int> row = cursor.getNext();
+
+	int columnIndex = this->getColumnIndex(columnName);
+	int aggregateIndex = this->getColumnIndex(aggregateColumnName);
+
+	while (!row.empty())
+	{
+		if (uniqueEntries.find(row[columnIndex]) != uniqueEntries.end())
+		{
+			uniqueEntries[row[columnIndex]].push_back(row[aggregateIndex]);
+		}
+		else
+		{
+			vector<int> temp;
+			temp.push_back(row[aggregateIndex]);
+			uniqueEntries[row[columnIndex]] = temp;
+		}
+
+		row = cursor.getNext();
+	}
+
+	for (auto it = uniqueEntries.begin(); it != uniqueEntries.end(); it++)
+	{
+		int aggregateAnswer = 0;
+		if (operatorName == "MIN")
+		{
+			int min = it->second[0];
+
+			for (int i=1; i<it->second.size(); i++)
+			{
+				if (min > it->second[i]) min = it->second[i];
+			}
+
+			aggregateAnswer = min;
+
+		}
+
+		else if (operatorName == "MAX")
+		{
+			int max = it->second[0];
+
+			for (int i=1; i<it->second.size(); i++)
+			{
+				if (max < it->second[i]) max = it->second[i];
+			}
+
+			aggregateAnswer = max;
+		}
+
+		else if (operatorName == "SUM")
+		{
+			int sum = 0;
+
+			for (int i=0; i<it->second.size(); i++)
+			{
+				sum += it->second[i];
+			}
+
+			aggregateAnswer = sum;
+		}
+
+		else
+		{
+			int avg = 0, num = it->second.size();
+
+			for (int i=0; i<it->second.size(); i++)
+			{
+				avg += it->second[i];
+			}
+
+			avg = avg / num;
+
+			aggregateAnswer = avg;
+		}
+
+		vector<int> resultRow;
+		resultRow.push_back(it->first);
+		resultRow.push_back(aggregateAnswer);
+
+		resultTable->writeRow<int>(resultRow);
+	}
+
+	resultTable->blockify();
+	tableCatalogue.insertTable(resultTable);
+
+	cout << "Total block accesses: "<<BLOCK_ACCESSES<<"\n";
+	BLOCK_ACCESSES = 0;
+    
+	return;
+}
+
 /**
  * @brief Function that returns the index of column indicated by columnName
  * 
  * @param columnName 
  * @return int 
  */
-int Table::getColumnIndex(string columnName)
+/*int Table::getColumnIndex(string columnName)
 {
     logger.log("Table::getColumnIndex");
     for (int columnCounter = 0; columnCounter < this->columnCount; columnCounter++)
@@ -334,4 +453,4 @@ int Table::getColumnIndex(string columnName)
         if (this->columns[columnCounter] == columnName)
             return columnCounter;
     }
-}
+}*/

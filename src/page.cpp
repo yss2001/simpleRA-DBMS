@@ -98,3 +98,25 @@ void Page::writePage()
     }
     fout.close();
 }
+
+vector<vector<int> >  &Page::getAllRows()
+{
+    logger.log("Page::getAllRows");
+	return this->rows;
+}
+
+int Page::getRowCount()
+{
+    logger.log("Page::getRowCount");
+    return this->rowCount;
+}
+
+void Page::appendRow(vector <int> row)
+{
+    logger.log("Page::appendRow");
+    for (int columnCounter = 0; columnCounter < this->columnCount; columnCounter++)
+    {
+        this->rows[this->rowCount][columnCounter] = row[columnCounter];
+    }
+    this->rowCount ++;
+}

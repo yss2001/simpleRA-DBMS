@@ -48,6 +48,8 @@ bool syntacticParse()
             return syntacticParseDISTINCT();
         else if (possibleQueryType == "SORT")
             return syntacticParseSORT();
+	else if (possibleQueryType == "GROUP")
+	    return syntacticParseGROUP();
         else
         {
             cout << "SYNTAX ERROR" << endl;
@@ -87,6 +89,7 @@ void ParsedQuery::clear()
     this->joinSecondRelationName = "";
     this->joinFirstColumnName = "";
     this->joinSecondColumnName = "";
+    this->joinBuffer = 0;
 
     this->loadRelationName = "";
 
@@ -114,6 +117,12 @@ void ParsedQuery::clear()
     this->sortRelationName = "";
 
     this->sourceFileName = "";
+
+    this->groupByRelationName = "";
+    this->groupByColumnName = "";
+    this->groupByOperatorName = "";
+    this->groupByAggregateColumnName = "";
+    this->groupByResultRelationName = "";
 }
 
 /**
