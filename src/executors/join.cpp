@@ -62,6 +62,11 @@ bool semanticParseJOIN()
         cout << "SEMANTIC ERROR: Column doesn't exist in relation" << endl;
         return false;
     }
+    if((tokenizedQuery[4] == "NESTED" && parsedQuery.joinBuffer <= 2) || (tokenizedQuery[4] == "PARTHASH" && parsedQuery.joinBuffer <=1))
+    {
+        cout << "SEMANTIC ERROR: Invalid buffer value provided" << endl;
+        return false;
+    }
     return true;
 }
 
