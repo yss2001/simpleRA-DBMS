@@ -31,6 +31,7 @@ class BufferManager{
     
     BufferManager();
     Page getPage(string tableName, int pageIndex);
+    Page *getPagePointer(string tableName, int pageIndex);
     void writePage(string pageName, vector<vector<int>> rows);
     void deleteFile(string tableName, int pageIndex);
     void deleteFile(string fileName);

@@ -71,7 +71,11 @@ Page BufferManager::insertIntoPool(string tableName, int pageIndex)
     logger.log("BufferManager::insertIntoPool");
     Page page(tableName, pageIndex);
     if (this->pages.size() >= BLOCK_COUNT)
+    {
+        if(BUFFER_WRITE_FLAG == 1)
+            pages.front().writePage();
         pages.pop_front();
+    }
     pages.push_back(page);
 
     BLOCK_ACCESSES ++;
@@ -120,27 +124,53 @@ void BufferManager::commitPages()
 
 void BufferManager::appendPage(string tableName, vector<int> row)
 {
+    //cout<<tableName<<" "<<row[0]<<" getting it: "<<endl;
     logger.log("BufferManager::appendPage");
     Table *outTable = tableCatalogue.getTable(tableName);
-    Page outPage = this->getPage(tableName,outTable->blockCount-1);
-    if(outPage.getRowCount() == outTable->maxRowsPerBlock)
+    string pageName = "../data/temp/"+tableName + "_Page" + to_string(outTable->blockCount-1);
+    deque<Page>::iterator pageIterator;
+    //cout<<outTable->blockCount<<" "<<outTable->rowsPerBlockCount[outTable->rowsPerBlockCount.size()-1]<<endl;
+    for(pageIterator = pages.begin();pageIterator != pages.end();pageIterator++)
+        if(pageIterator->pageName == pageName)
+            break;
+    if(pageIterator == pages.end())
     {
-        outPage.writePage();
+        pageIterator = pages.begin();
+        pageIterator->writePage();
+        BLOCK_ACCESSES += 1;
+        this->insertIntoPool(tableName,outTable->blockCount-1);
+        for(pageIterator = pages.begin();pageIterator != pages.end();pageIterator++)
+            if(pageIterator->pageName == pageName)
+                break;
+    }
+    //cout<<outTable->maxRowsPerBlock<<" "<<pageIterator->getRowCount()<<endl;
+    if(pageIterator->getRowCount() == outTable->maxRowsPerBlock)
+    {
+        pageIterator->writePage();
         outTable->blockCount ++;
-        if (this->pages.size() >= BLOCK_COUNT)
-        {    
-            Page delPage = pages.front();
-            delPage.writePage();
-            pages.pop_front();
-            BLOCK_ACCESSES += 1;
-        }
-        Page appendPage(tableName,outTable->blockCount-1);
-        appendPage.appendRow(row);
-        pages.push_back(appendPage);
+        outTable->rowsPerBlockCount.emplace_back(1);
+        outTable->rowCount ++;
+        // if (this->pages.size() >= BLOCK_COUNT)
+        // {    
+        //     cout<<"yee";
+        //     Page delPage = pages.front();
+        //     //cout<<"deletion: "<<delPage.pageName<<endl;
+        //     delPage.writePage();
+        //     pages.pop_front();
+        //     BLOCK_ACCESSES += 1;
+        // }
+        vector<vector<int>> temp;
+        temp.push_back(row);    
+        Page appendPage(tableName,outTable->blockCount-1,temp,1);
+        appendPage.writePage();
         BLOCK_ACCESSES += 2;
     }
     else
-        outPage.appendRow(row);    
+    {
+        outTable->rowsPerBlockCount[outTable->rowsPerBlockCount.size()-1]++;
+        outTable->rowCount++;
+        pageIterator->appendRow(row);
+    }    
 }
 
 /**

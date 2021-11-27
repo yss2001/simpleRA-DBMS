@@ -84,6 +84,7 @@ Page::Page(string tableName, int pageIndex, vector<vector<int>> rows, int rowCou
  */
 void Page::writePage()
 {
+    //cout<<"writing... "<<this->rowCount<<endl;
     logger.log("Page::writePage");
     ofstream fout(this->pageName, ios::trunc);
     for (int rowCounter = 0; rowCounter < this->rowCount; rowCounter++)
@@ -101,16 +102,36 @@ void Page::writePage()
 
 vector<vector<int> >  &Page::getAllRows()
 {
+    logger.log("Page::getAllRows");
 	return this->rows;
 }
 
 int Page::getRowCount()
 {
+    logger.log("Page::getRowCount");
     return this->rowCount;
 }
 
 void Page::appendRow(vector <int> row)
 {
-    this->rows.push_back(row);
+    //cout<<"appending..."<<row[0]<<endl;
+    logger.log("Page::appendRow");
+    //cout<<"for page "<<this->pageName<<" "<<this->rowCount<<endl;
+    for (int columnCounter = 0; columnCounter < this->columnCount; columnCounter++)
+    {
+        //cout<<row[columnCounter]<<" ";
+        this->rows[this->rowCount][columnCounter] = row[columnCounter];
+    }
+    //cout<<endl<<endl;
     this->rowCount ++;
+    // for (int rowCounter = 0; rowCounter < this->rowCount; rowCounter++)
+    // {
+    //     for (int columnCounter = 0; columnCounter < this->columnCount; columnCounter++)
+    //     {
+    //         if (columnCounter != 0)
+    //             cout << " ";
+    //         cout << this->rows[rowCounter][columnCounter];
+    //     }
+    //     cout << endl;
+    // }
 }
