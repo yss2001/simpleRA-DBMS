@@ -212,7 +212,6 @@ void parthashJOIN()
             bufferManager.appendPage(partitionName,firstRow);
         partitionCheckFirst[hashValue]++;
         firstRow = firstCursor.getNext();
-        //cout<<"next"<<endl<<endl;
     }
     bufferManager.commitPages();
     
@@ -229,7 +228,6 @@ void parthashJOIN()
         string partitionName = parsedQuery.joinSecondRelationName + "Partition" + to_string(hashValue);
         if (partitionCheckSecond[hashValue] == 0)
         {   
-            //cout<<"new part: "<<hashValue<<endl;
             Table *partitionTable = new Table(partitionName, secondTable.columns);
             tableCatalogue.insertTable(partitionTable);
             vector<vector<int>> temp;
@@ -240,10 +238,7 @@ void parthashJOIN()
             bufferManager.writePage(partitionName,0,temp,1);
         }
         else
-        {
-            //cout<<"add part: "<<hashValue<<endl;
             bufferManager.appendPage(partitionName,secondRow);
-        }
         partitionCheckSecond[hashValue]++;
         secondRow = secondCursor.getNext();
     }
@@ -262,13 +257,10 @@ void parthashJOIN()
             continue;
         Table *firstPartition = tableCatalogue.getTable(string(parsedQuery.joinFirstRelationName + "Partition" + to_string(partId)));
         Table *secondPartition = tableCatalogue.getTable(string(parsedQuery.joinSecondRelationName + "Partition" + to_string(partId)));
-        //cout<<firstPartition->rowCount<<" "<<firstPartition->blockCount<<endl;
-        //cout<<secondPartition->rowCount<<" "<<secondPartition->blockCount<<endl;
         firstCursor = firstPartition->getCursor(); 
         vector <int> firstPartitionRow = firstCursor.getNext();
         unordered_map<int, vector<vector<int>>> firstPageMap;
         int rowCounter = 0;
-        //cout<<firstPartition->rowCount<<" "<<firstPartition->rowsPerBlockCount[0]<<endl;
         while(!firstPartitionRow.empty())
         {
             int key = firstPartitionRow[firstIndex];
@@ -281,40 +273,26 @@ void parthashJOIN()
                 firstPageMap[key] = temp;
             }
             rowCounter ++;
-            //cout<<"fin"<<endl;
-            //if(rowCounter == firstPartition->rowCount)
-            //    break;
             firstPartitionRow = firstCursor.getNext();
         }
-        //cout<<"fin"<<endl;
         secondCursor = secondPartition->getCursor();
         vector<int> row = secondCursor.getNext();
         vector<int> joinRow;
         joinRow.reserve(joinTable->columnCount);
-        //cout<<partitionCheckSecond[0]<<endl;
         for (int _ = 0; _ < partitionCheckSecond[partId]; _++)
         {
-            //logger.log(to_string(itrVar));
             vector<vector<int>> matchedRows = firstPageMap[row[secondIndex]];
             for (int i = 0; i < matchedRows.size(); i++)
             {
-                //cout<<matchedRows[i][0]<<endl;
                 joinRow = matchedRows[i];
                 joinRow.insert(joinRow.end(), row.begin(), row.end());
                 joinTable->writeRow<int>(joinRow);
             }
-            //if(itrVar == partitionCheckSecond[partId]-1)
-            //    break;
             row = secondCursor.getNext();
         }
     }
     joinTable->blockify();
     tableCatalogue.insertTable(joinTable);
-    for (int i = 0; i < parsedQuery.joinBuffer - 1; i++)
-    {
-        bufferManager.deleteFile(string(parsedQuery.joinFirstRelationName + "Partition"),i);
-        bufferManager.deleteFile(string(parsedQuery.joinSecondRelationName + "Partition"),i);
-    }
 
     BLOCK_COUNT = prevCount;
     bufferManager.resetBufferManager();

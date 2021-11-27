@@ -124,12 +124,10 @@ void BufferManager::commitPages()
 
 void BufferManager::appendPage(string tableName, vector<int> row)
 {
-    //cout<<tableName<<" "<<row[0]<<" getting it: "<<endl;
     logger.log("BufferManager::appendPage");
     Table *outTable = tableCatalogue.getTable(tableName);
     string pageName = "../data/temp/"+tableName + "_Page" + to_string(outTable->blockCount-1);
     deque<Page>::iterator pageIterator;
-    //cout<<outTable->blockCount<<" "<<outTable->rowsPerBlockCount[outTable->rowsPerBlockCount.size()-1]<<endl;
     for(pageIterator = pages.begin();pageIterator != pages.end();pageIterator++)
         if(pageIterator->pageName == pageName)
             break;
@@ -143,22 +141,12 @@ void BufferManager::appendPage(string tableName, vector<int> row)
             if(pageIterator->pageName == pageName)
                 break;
     }
-    //cout<<outTable->maxRowsPerBlock<<" "<<pageIterator->getRowCount()<<endl;
     if(pageIterator->getRowCount() == outTable->maxRowsPerBlock)
     {
         pageIterator->writePage();
         outTable->blockCount ++;
         outTable->rowsPerBlockCount.emplace_back(1);
         outTable->rowCount ++;
-        // if (this->pages.size() >= BLOCK_COUNT)
-        // {    
-        //     cout<<"yee";
-        //     Page delPage = pages.front();
-        //     //cout<<"deletion: "<<delPage.pageName<<endl;
-        //     delPage.writePage();
-        //     pages.pop_front();
-        //     BLOCK_ACCESSES += 1;
-        // }
         vector<vector<int>> temp;
         temp.push_back(row);    
         Page appendPage(tableName,outTable->blockCount-1,temp,1);

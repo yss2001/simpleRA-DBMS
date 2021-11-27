@@ -19,7 +19,6 @@ Cursor::Cursor(string tableName, int pageIndex)
 vector<int> Cursor::getNext()
 {
     logger.log("Cursor::getNext");
-    //cout<<"cursor "<<this->pagePointer<<endl;
     vector<int> result = this->page.getRow(this->pagePointer);
     this->pagePointer++;
     if(result.empty()){
