@@ -26,5 +26,6 @@ class Page{
     Page(string tableName, int pageIndex, vector<vector<int>> rows, int rowCount);
     vector<int> getRow(int rowIndex);
     vector<vector <int>> &getAllRows();
+    int getRowCount();
     void writePage();
 };

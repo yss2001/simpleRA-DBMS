@@ -88,6 +88,11 @@ vector<vector<int> >  &Page::getAllRows()
 	return this->rows;
 }
 
+int Page::getRowCount()
+{
+    return this->rowCount;
+}
+
 /**
  * @brief writes current page contents to file.
  * 
