@@ -1,5 +1,8 @@
 #include"global.h"
 #define DEFAULT_BLOCK_SIZE 10
+#define MAXINT 1e9
+#define MININT -1e9
+
 /**
  * @brief File contains method to process SORT commands.
  * 
@@ -10,7 +13,11 @@
  */
 bool syntacticParseSORT(){
     logger.log("syntacticParseSORT");
-    if((tokenizedQuery.size() != 10 && tokenizedQuery.size() != 8) || (tokenizedQuery.size() == 10 && tokenizedQuery[8] != "BUFFER") || tokenizedQuery[4] != "BY" || tokenizedQuery[6] != "IN"){
+    if(tokenizedQuery.size() == 10 && tokenizedQuery[8] != "BUFFER"){
+        cout<<"SYNTAX ERROR"<<endl;
+        return false;
+    }
+    if((tokenizedQuery.size() == 10 || tokenizedQuery.size() == 8) && (tokenizedQuery[4] != "BY" || tokenizedQuery[6] != "IN")){
         cout<<"SYNTAX ERROR"<<endl;
         return false;
     }
@@ -75,9 +82,13 @@ void executeSORT(){
 
     for(int subFileCounter = 0;subFileCounter < subFileCount;subFileCounter++)
     {
-        subFile.push_back(string("SubFile_"+to_string(subFileCounter)+"__phase_0"));
+        if(subFileCount == 1)
+            subFile.push_back(parsedQuery.sortResultRelationName);
+        else
+            subFile.push_back(string("Phase_0__SubFile_"+to_string(subFileCounter)));
         Table *subFileTable = new Table(subFile[subFileCounter],sortTable->columns);
         tableCatalogue.insertTable(subFileTable);
+        //cout<<subFileTable->tableName<<endl;
         vector<vector<int>> sortTableRows;
         for(int blockCounter = subFileCounter*parsedQuery.sortBuffer;blockCounter<min(int(sortTable->blockCount),(subFileCounter+1)*parsedQuery.sortBuffer);blockCounter++)
         {
@@ -87,16 +98,26 @@ void executeSORT(){
                 sortTableRows.push_back(blockRows[i]);
         }   
         //cout<<sortTableRows.size()<<endl;
-        
-        
+        if(sortIndex != 0)
+            for(int i=0;i<sortTableRows.size();i++)
+                swap(sortTableRows[i][0],sortTableRows[i][sortIndex]);
         // TO CHECK     
-        // sort(sortTableRows.begin(),sortTableRows.end(),
-        //         [](const vector<int>& a, const vector<int> &b) {
-        //             return a[sortIndex] < b[sortIndex];
-        //         });
+        if(parsedQuery.sortingStrategy == ASC)
+            sort(sortTableRows.begin(),sortTableRows.end(),
+                 [](const vector<int>& a, const vector<int> &b) {
+                     return a[0] < b[0];
+                 });
+        else
+            sort(sortTableRows.begin(),sortTableRows.end(),
+                 [](const vector<int>& a, const vector<int> &b) {
+                     return b[0] < a[0];
+                 });
+        
         // BLACK BOX HERE
-        
-        
+        if(sortIndex != 0)
+            for(int i=0;i<sortTableRows.size();i++)
+                swap(sortTableRows[i][0],sortTableRows[i][sortIndex]);
+
         int rowCounter = 0,pageCounter = 0, rowPageCounter = 0;
         vector <vector <int> > outRows;
         while(rowCounter < sortTableRows.size())
@@ -116,40 +137,60 @@ void executeSORT(){
                 outRows.clear();
             }
         }
+        //cout<<subFileTable->tableName<<" "<<subFileTable->blockCount<<" "<<subFileTable->rowCount<<" "<<subFileTable->rowsPerBlockCount.size()<<endl;
     }
-    cout<<"SubFiles Generated..."<<endl;
-
+    //cout<<"SubFiles Generated..."<<endl;
+    //logger.log("Subfiles generated");
     int subFileMergeCounter = subFileCount,prevPhaseCounter = 0;
     while(subFileMergeCounter != 1)
     {
         int mergeIterations = ceil(float(subFileMergeCounter)/float(parsedQuery.sortBuffer));
+        //cout<<subFileMergeCounter<<" "<<mergeIterations<<endl;
         vector <string> mergeFile;
         for(int mergeFileCounter = 0;mergeFileCounter < mergeIterations;mergeFileCounter++)
-        {   
-            mergeFile.push_back(string("SubFile_"+to_string(mergeFileCounter)+"__phase_"+to_string(mergeFileCounter)));
+        {
+            if(mergeIterations == 1)
+                mergeFile.push_back(parsedQuery.sortResultRelationName);
+            else   
+                mergeFile.push_back(string(+"Phase_"+to_string(prevPhaseCounter+1) + "__SubFile_"+to_string(mergeFileCounter)));
             Table *mergeFileTable = new Table(mergeFile[mergeFileCounter],sortTable->columns);
             tableCatalogue.insertTable(mergeFileTable);
             vector <Cursor> cursorManager;
+            vector <int> cursorMaxPointer;
             vector <vector <int>> outRows;
             for(int subFileCounter = mergeFileCounter*parsedQuery.sortBuffer;subFileCounter<min(subFileMergeCounter,(mergeFileCounter+1)*parsedQuery.sortBuffer);subFileCounter++)
             {
-                string subFileName = "SubFile_"+to_string(subFileCounter)+"__phase_"+to_string(prevPhaseCounter);
-                cursorManager.push_back(tableCatalogue.getTable(subFileName)->getCursor());
+                string subFileName = "Phase_"+to_string(prevPhaseCounter)+"__SubFile_"+to_string(subFileCounter);
+                logger.log(subFileName);
+                Table *tempTable = tableCatalogue.getTable(subFileName);
+                cursorManager.push_back(tempTable->getCursor());
+                cursorMaxPointer.push_back(tempTable->rowCount);
             }
-            int exitFlag = 0,minSubFile = 1e9,minValue = 1e9, pageCounter = 0;
+            //cout<<"cursors done"<<endl;
+            //logger.log("cursor done");
+            int exitFlag, mergeSubFile, mergeValue, pageCounter = 0;
             while(true)
             {
-                exitFlag = 0,minSubFile = 1e9,minValue = 1e9;
+                exitFlag = 0;
+                if(parsedQuery.sortingStrategy == ASC)
+                    mergeSubFile = MAXINT,mergeValue = MAXINT;
+                else
+                    mergeSubFile = MININT,mergeValue = MININT;
                 for(int mergeCounter = 0; mergeCounter < cursorManager.size();mergeCounter++)
                 {
-                    vector <int> subFileRow = cursorManager[mergeCounter].getNext();
-                    if(subFileRow[sortIndex] < minValue)
+                    //cout<<cursorManager[mergeCounter].pagePointer<<endl;
+                    int cursorPointerValue = (cursorManager[mergeCounter].pageIndex*sortTable->maxRowsPerBlock) + cursorManager[mergeCounter].pagePointer;
+                    if(cursorPointerValue >= cursorMaxPointer[mergeCounter])
+                        continue;
+                    vector <int> subFileRow = cursorManager[mergeCounter].getRow();
+                    if((parsedQuery.sortingStrategy == ASC && subFileRow[sortIndex] < mergeValue) || (parsedQuery.sortingStrategy == DESC && subFileRow[sortIndex] > mergeValue))
                     {
                         exitFlag = 1;
-                        minSubFile = mergeCounter;
-                        minValue = subFileRow[sortIndex];
+                        mergeSubFile = mergeCounter;
+                        mergeValue = subFileRow[sortIndex];
                     }
                 }
+                //cout<<mergeSubFile<<" "<<mergeValue<<endl;
                 if(exitFlag == 0) {
                     if(outRows.size() != 0)
                     {
@@ -160,7 +201,7 @@ void executeSORT(){
                     }
                     break;
                 }
-                vector <int> outRow = cursorManager[minSubFile].getNext();
+                vector <int> outRow = cursorManager[mergeSubFile].getNext();
                 outRows.push_back(outRow);
                 if(outRows.size() == sortTable->maxRowsPerBlock)
                 {
@@ -174,7 +215,10 @@ void executeSORT(){
             }
         }
         subFileMergeCounter = mergeIterations;
+        prevPhaseCounter ++;
     }
     
+    // Rename last phase to result table
+
     return;
 }
