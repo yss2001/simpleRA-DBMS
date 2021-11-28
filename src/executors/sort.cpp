@@ -77,9 +77,7 @@ void executeSORT(){
     int subFileCount = ceil(float(sortTable->blockCount)/float(parsedQuery.sortBuffer));
     int mergeFileCount = ceil(log(subFileCount)/log(min(subFileCount,parsedQuery.sortBuffer-1)));
 
-    //cout<<subFileCount<<" "<<mergeFileCount<<endl;
     vector <string> subFile;
-
     for(int subFileCounter = 0;subFileCounter < subFileCount;subFileCounter++)
     {
         if(subFileCount == 1)
@@ -88,7 +86,6 @@ void executeSORT(){
             subFile.push_back(string("Phase_0__SubFile_"+to_string(subFileCounter)));
         Table *subFileTable = new Table(subFile[subFileCounter],sortTable->columns);
         tableCatalogue.insertTable(subFileTable);
-        //cout<<subFileTable->tableName<<endl;
         vector<vector<int>> sortTableRows;
         for(int blockCounter = subFileCounter*parsedQuery.sortBuffer;blockCounter<min(int(sortTable->blockCount),(subFileCounter+1)*parsedQuery.sortBuffer);blockCounter++)
         {
@@ -97,11 +94,11 @@ void executeSORT(){
             for(int i=0;i<sortPage.getRowCount();i++)
                 sortTableRows.push_back(blockRows[i]);
         }   
-        //cout<<sortTableRows.size()<<endl;
+
         if(sortIndex != 0)
             for(int i=0;i<sortTableRows.size();i++)
                 swap(sortTableRows[i][0],sortTableRows[i][sortIndex]);
-        // TO CHECK     
+  
         if(parsedQuery.sortingStrategy == ASC)
             sort(sortTableRows.begin(),sortTableRows.end(),
                  [](const vector<int>& a, const vector<int> &b) {
@@ -113,7 +110,6 @@ void executeSORT(){
                      return b[0] < a[0];
                  });
         
-        // BLACK BOX HERE
         if(sortIndex != 0)
             for(int i=0;i<sortTableRows.size();i++)
                 swap(sortTableRows[i][0],sortTableRows[i][sortIndex]);
@@ -127,7 +123,6 @@ void executeSORT(){
             rowPageCounter++;
             if(rowCounter == sortTableRows.size() || rowPageCounter == sortTable->maxRowsPerBlock)
             {
-                //cout<<rowCounter<<endl;
                 subFileTable->blockCount ++;
                 subFileTable->rowCount += outRows.size();
                 subFileTable->rowsPerBlockCount.emplace_back(outRows.size());
@@ -137,15 +132,12 @@ void executeSORT(){
                 outRows.clear();
             }
         }
-        //cout<<subFileTable->tableName<<" "<<subFileTable->blockCount<<" "<<subFileTable->rowCount<<" "<<subFileTable->rowsPerBlockCount.size()<<endl;
     }
-    //cout<<"SubFiles Generated..."<<endl;
-    //logger.log("Subfiles generated");
+
     int subFileMergeCounter = subFileCount,prevPhaseCounter = 0;
     while(subFileMergeCounter != 1)
     {
         int mergeIterations = ceil(float(subFileMergeCounter)/float(parsedQuery.sortBuffer));
-        //cout<<subFileMergeCounter<<" "<<mergeIterations<<endl;
         vector <string> mergeFile;
         for(int mergeFileCounter = 0;mergeFileCounter < mergeIterations;mergeFileCounter++)
         {
@@ -166,8 +158,6 @@ void executeSORT(){
                 cursorManager.push_back(tempTable->getCursor());
                 cursorMaxPointer.push_back(tempTable->rowCount);
             }
-            //cout<<"cursors done"<<endl;
-            //logger.log("cursor done");
             int exitFlag, mergeSubFile, mergeValue, pageCounter = 0;
             while(true)
             {
@@ -178,7 +168,6 @@ void executeSORT(){
                     mergeSubFile = MININT,mergeValue = MININT;
                 for(int mergeCounter = 0; mergeCounter < cursorManager.size();mergeCounter++)
                 {
-                    //cout<<cursorManager[mergeCounter].pagePointer<<endl;
                     int cursorPointerValue = (cursorManager[mergeCounter].pageIndex*sortTable->maxRowsPerBlock) + cursorManager[mergeCounter].pagePointer;
                     if(cursorPointerValue >= cursorMaxPointer[mergeCounter])
                         continue;
@@ -190,7 +179,6 @@ void executeSORT(){
                         mergeValue = subFileRow[sortIndex];
                     }
                 }
-                //cout<<mergeSubFile<<" "<<mergeValue<<endl;
                 if(exitFlag == 0) {
                     if(outRows.size() != 0)
                     {
@@ -217,8 +205,5 @@ void executeSORT(){
         subFileMergeCounter = mergeIterations;
         prevPhaseCounter ++;
     }
-    
-    // Rename last phase to result table
-
     return;
 }
