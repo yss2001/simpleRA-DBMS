@@ -76,6 +76,16 @@ Page BufferManager::insertIntoPool(string tableName, int pageIndex)
     return page;
 }
 
+void BufferManager::resetBufferManager()
+{
+    logger.log("BufferManager::resetBufferManager");
+    while (this->pages.size() > BLOCK_COUNT)
+    {
+        pages.pop_front();
+    }
+}
+
+
 /**
  * @brief The buffer manager is also responsible for writing pages. This is
  * called when new tables are created using assignment statements.

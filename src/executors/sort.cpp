@@ -205,5 +205,6 @@ void executeSORT(){
         subFileMergeCounter = mergeIterations;
         prevPhaseCounter ++;
     }
-    return;
+    BLOCK_COUNT = prevCount;
+    bufferManager.resetBufferManager();
 }
